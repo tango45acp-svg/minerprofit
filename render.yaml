@@ -3,9 +3,9 @@ services:
   - type: web
     name: minerprofit
     runtime: node
-    # Free instances sleep after inactivity (slow first call for agents).
-    # Starter keeps it always on; switch to "free" while testing if you like.
-    plan: starter
+    # Free plan: sleeps after ~15 min idle, so the first call after a nap is slow.
+    # Switch to "starter" (about $7/mo) once agents are using it.
+    plan: free
     buildCommand: npm ci --omit=dev
     startCommand: npm start
     healthCheckPath: /health
@@ -13,8 +13,8 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "22"
-      - key: PAY_TO              # your Base wallet address (receives USDC)
-        sync: false
+      - key: PAY_TO              # Base wallet that receives USDC
+        value: "0x3cBe74603889AD6Bfa3fa4285b43b4D6b8a33642"
       - key: X402_NETWORK        # base-sepolia for testing, base for real money
         value: base-sepolia
       - key: CDP_API_KEY_ID      # needed only for X402_NETWORK=base
