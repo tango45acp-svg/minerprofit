@@ -1,12 +1,12 @@
 // Assembles a live "snapshot" per coin with a fallback chain:
 //   network: native chain API -> WhatToMine -> manual override
-//   price:   CoinGecko -> WhatToMine BTC rate x BTC price -> manual override
+//   price:   CoinGecko -> CoinPaprika -> WhatToMine BTC rate x BTC price -> manual override
 // Every snapshot reports which source it used and whether data is stale.
 import fs from 'node:fs';
 import path from 'node:path';
 import { TTLCache } from './cache.js';
 import { COINS, getCoin } from './coins.js';
-import { coingeckoPrices, whattomineCoins } from './sources.js';
+import { coingeckoPrices, coinpaprikaPrices, mempoolBtcPrice, whattomineCoins } from './sources.js';
 import { parseHashrate } from './units.js';
 
 const NETWORK_TTL = Number(process.env.NETWORK_TTL_MS || 60_000);
@@ -85,12 +85,32 @@ function overrideNetwork(sym) {
 // ---------- Fetch helpers ----------
 
 async function wtm() {
-  return cache.get('wtm', WTM_TTL, whattomineCoins);
+  return cache.get('whattomine', WTM_TTL, whattomineCoins);
 }
 
 async function allPrices() {
   const ids = Object.values(COINS).map((c) => c.coingeckoId).filter(Boolean);
-  return cache.get('prices', PRICE_TTL, () => coingeckoPrices(ids));
+  return cache.get('coingecko', PRICE_TTL, () => coingeckoPrices(ids));
+}
+
+async function paprikaPrices() {
+  const ids = Object.values(COINS).map((c) => c.paprikaId).filter(Boolean);
+  return cache.get('coinpaprika', PRICE_TTL, () => coinpaprikaPrices(ids));
+}
+
+/** BTC/USD from any source that answers — needed to convert WhatToMine's BTC rates. */
+async function btcUsd() {
+  for (const get of [
+    async () => (await allPrices()).value.bitcoin,
+    async () => (await paprikaPrices()).value['btc-bitcoin'],
+    async () => (await cache.get('mempool-price', PRICE_TTL, mempoolBtcPrice)).value,
+  ]) {
+    try {
+      const v = await get();
+      if (v > 0) return v;
+    } catch { /* try next */ }
+  }
+  return null;
 }
 
 async function networkFor(coin) {
@@ -100,10 +120,13 @@ async function networkFor(coin) {
     const n = overrideNetwork(coin.symbol);
     if (n) return { ...n, source: 'manual_override', stale: false, at: Date.parse(ov.updatedAt) || Date.now() };
   }
+  let staleChain = null;
   if (coin.native) {
     try {
-      const r = await cache.get(`net:${coin.symbol}`, NETWORK_TTL, coin.native);
-      return { ...r.value, source: 'chain_api', stale: r.stale, at: r.at };
+      const r = await cache.get(`chain:${coin.symbol}`, NETWORK_TTL, coin.native);
+      const out = { ...r.value, source: 'chain_api', stale: r.stale, at: r.at };
+      if (!r.stale) return out;
+      staleChain = out; // keep looking for something fresher
     } catch (e) {
       errors.push(`chain_api: ${e.message}`);
     }
@@ -112,12 +135,17 @@ async function networkFor(coin) {
     try {
       const r = await wtm();
       const c = r.value[coin.wtmTag];
-      if (c) return { ...c, source: 'whattomine', stale: r.stale || c.lagging, at: r.at };
-      errors.push(`whattomine: ${coin.wtmTag} not listed`);
+      if (c) {
+        const out = { ...c, source: 'whattomine', stale: r.stale || c.lagging, at: r.at };
+        if (!out.stale || !staleChain || out.at > staleChain.at) return out;
+      } else {
+        errors.push(`whattomine: ${coin.wtmTag} not listed`);
+      }
     } catch (e) {
       errors.push(`whattomine: ${e.message}`);
     }
   }
+  if (staleChain) return staleChain;
   const n = overrideNetwork(coin.symbol);
   if (n) return { ...n, source: 'manual_override', stale: false, at: Date.parse(ov.updatedAt) || Date.now() };
   const err = new Error(`no network data available for ${coin.symbol}`);
@@ -131,30 +159,49 @@ async function priceFor(coin) {
   const errors = [];
   const ov = overrides[coin.symbol];
   if (ov?.force && ov.priceUsd) return { priceUsd: ov.priceUsd, source: 'manual_override', stale: false, at: Date.now() };
+
+  // A fresh answer from any source beats a stale one from a preferred source.
+  const candidates = [];
   try {
     const r = await allPrices();
     const p = r.value[coin.coingeckoId];
-    if (p) return { priceUsd: p, source: 'coingecko', stale: r.stale, at: r.at };
-    errors.push(`coingecko: no price for ${coin.coingeckoId}`);
+    if (p) candidates.push({ priceUsd: p, source: 'coingecko', stale: r.stale, at: r.at });
+    else errors.push(`coingecko: no price for ${coin.coingeckoId}`);
   } catch (e) {
     errors.push(`coingecko: ${e.message}`);
   }
-  if (coin.wtmTag) {
+  if (!candidates.some((c) => !c.stale) && coin.paprikaId) {
     try {
-      const [w, prices] = await Promise.all([wtm(), allPrices()]);
+      const r = await paprikaPrices();
+      const p = r.value[coin.paprikaId];
+      if (p) candidates.push({ priceUsd: p, source: 'coinpaprika', stale: r.stale, at: r.at });
+    } catch (e) {
+      errors.push(`coinpaprika: ${e.message}`);
+    }
+  }
+  if (!candidates.some((c) => !c.stale) && coin.wtmTag) {
+    try {
+      const w = await wtm();
       const rate = w.value[coin.wtmTag]?.exchangeRateBtc;
-      const btc = prices.value.bitcoin;
-      if (rate > 0 && btc > 0) return { priceUsd: rate * btc, source: 'whattomine_btc_rate', stale: w.stale || prices.stale, at: w.at };
+      const btc = await btcUsd();
+      if (rate > 0 && btc > 0) candidates.push({ priceUsd: rate * btc, source: 'whattomine_btc_rate', stale: w.stale, at: w.at });
     } catch (e) {
       errors.push(`whattomine: ${e.message}`);
     }
   }
+  const best = candidates.find((c) => !c.stale) || candidates.sort((a, b) => b.at - a.at)[0];
+  if (best) return best;
   if (ov?.priceUsd) return { priceUsd: ov.priceUsd, source: 'manual_override', stale: false, at: Date.parse(ov.updatedAt) || Date.now() };
   const err = new Error(`no price available for ${coin.symbol}`);
   err.code = 'data_unavailable';
   err.details = errors;
   err.hint = 'Retry shortly, or pass price_usd to compute a what-if';
   throw err;
+}
+
+/** Upstream health for /v1/status. */
+export function sourceHealth() {
+  return cache.health();
 }
 
 /**
@@ -199,6 +246,8 @@ export async function getSnapshot(symbol, whatIf = {}) {
     },
     stale: Boolean((net && !(net instanceof Error) && net.stale) || (price && !(price instanceof Error) && price.stale)),
     asOf: new Date(times.length ? Math.min(...times) : Date.now()).toISOString(),
+    priceAsOf: price && !(price instanceof Error) ? new Date(price.at).toISOString() : null,
+    networkAsOf: net && !(net instanceof Error) ? new Date(net.at).toISOString() : null,
     notes: coin.notes,
   };
 }

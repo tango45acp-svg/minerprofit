@@ -34,6 +34,8 @@ header{display:flex;justify-content:space-between;align-items:center;padding:4px
 .live{font-size:14px;color:var(--muted);display:flex;align-items:center;gap:8px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--gain)}
 .live.stale .dot{background:var(--power)}
+.live.stale{color:var(--power)}
+.old{display:block;font-size:12px;color:var(--power)}
 .grid{display:grid;gap:16px}
 @media (min-width:860px){.grid{grid-template-columns:360px 1fr;align-items:start}}
 @media (max-width:859px){.grid>.stack{display:contents}#hero{order:1}#ratePanel{order:2}#rigPanel{order:3}#rankPanel{order:4}#mktPanel{order:5}#apiPanel{order:6}}
@@ -186,6 +188,7 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;max-width:70ch}
   const kwhFmt = (n) => '$' + (Math.abs(n * 100 - Math.round(n * 100)) < 1e-9 || n >= 0.1 ? n.toFixed(2) : n.toFixed(3));
   const coinFmt = (n) => n >= 100 ? n.toLocaleString('en-US', { maximumFractionDigits: 1 }) : n >= 1 ? n.toFixed(3) : n.toPrecision(3);
   const priceFmt = (n) => n >= 1000 ? '$' + Math.round(n).toLocaleString('en-US') : n >= 1 ? '$' + n.toFixed(2) : '$' + n.toPrecision(3);
+  const ageFmt = (ms) => { const s = Math.max(0, Math.round(ms / 1000)); return s < 60 ? `${s}s` : s < 3600 ? `${Math.round(s / 60)}m` : `${Math.round(s / 3600)}h`; };
   const hashFmt = (hs) => { const u = [['EH',1e18],['PH',1e15],['TH',1e12],['GH',1e9],['MH',1e6],['KH',1e3]]; for (const [k,v] of u) if (hs >= v) return +(hs/v).toPrecision(4) + ' ' + k + '/s'; return hs + ' H/s'; };
 
   let hardware = [], coins = {}, coinMeta = {}, rig = [], kwh = 0.08, lastFetch = 0, stale = false;
@@ -252,9 +255,16 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;max-width:70ch}
   }
 
   function renderAdd() {
-    const groups = { gpu: 'GPUs', asic: 'ASIC miners' };
-    $('add').innerHTML = '<option value="">Add a GPU or miner…</option>' + Object.entries(groups).map(([t, label]) =>
-      `<optgroup label="${label}">` + hardware.filter((h) => h.type === t).map((h) => `<option value="${esc(h.id)}">${esc(h.name)} (${Object.keys(h.coins).join(', ')})</option>`).join('') + '</optgroup>').join('');
+    const groups = [
+      ['RTX 50 series', (h) => h.series === 'RTX 50', (h) => h.name.replace('NVIDIA GeForce ', '')],
+      ['RTX 40 series', (h) => h.series === 'RTX 40', (h) => h.name.replace('NVIDIA GeForce ', '')],
+      ['Other GPUs', (h) => h.type === 'gpu' && !h.series, (h) => h.name],
+      ['ASIC miners', (h) => h.type === 'asic', (h) => `${h.name} (${Object.keys(h.coins).join(', ')})`],
+    ];
+    $('add').innerHTML = '<option value="">Add a GPU or miner…</option>' + groups.map(([label, test, name]) => {
+      const items = hardware.filter(test);
+      return items.length ? `<optgroup label="${label}">` + items.map((h) => `<option value="${esc(h.id)}">${esc(name(h))}</option>`).join('') + '</optgroup>' : '';
+    }).join('');
   }
 
   function renderResults() {
@@ -302,7 +312,9 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;max-width:70ch}
     const rowsHtml = Object.values(coinMeta).map((c) => {
       const m = coins[c.symbol];
       if (!m || m.error) return `<tr><td>${esc(c.name)}</td><td colspan="2">Unavailable</td></tr>`;
-      return `<tr><td>${esc(c.name)} <span style="color:var(--muted)">${esc(c.symbol)}</span></td><td>${priceFmt(m.price_usd)}</td><td>${hashFmt(m.network_hashrate_hs)}</td></tr>`;
+      const age = m.price_as_of ? ageFmt(Date.now() - Date.parse(m.price_as_of)) : '';
+      const old = m.stale ? ` <span class="old" title="Price feed delayed">${age} old</span>` : '';
+      return `<tr><td>${esc(c.name)} <span style="color:var(--muted)">${esc(c.symbol)}</span></td><td>${priceFmt(m.price_usd)}${old}</td><td>${hashFmt(m.network_hashrate_hs)}</td></tr>`;
     }).join('');
     $('market').innerHTML = `<table><thead><tr><th>Coin</th><th>Price</th><th>Network</th></tr></thead><tbody>${rowsHtml}</tbody></table>`;
   }
@@ -314,18 +326,22 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;max-width:70ch}
 
   function renderAll() { renderRate(); renderRig(); renderResults(); renderApi(); writeUrl(); }
 
+  // Age of the oldest price actually on screen, from the server's own timestamps.
   function renderLive() {
     const el = $('live');
     if (!lastFetch) return;
-    const s = Math.round((Date.now() - lastFetch) / 1000);
-    el.classList.toggle('stale', stale);
-    $('liveText').textContent = (stale ? 'Some data delayed · ' : 'Live · ') + (s < 60 ? `updated ${s}s ago` : `updated ${Math.round(s / 60)}m ago`);
+    const times = Object.values(coins).filter((m) => m && !m.error && m.price_as_of).map((m) => Date.parse(m.price_as_of));
+    if (!times.length) { el.classList.add('stale'); $('liveText').textContent = 'Live prices unavailable. Retrying'; return; }
+    const age = Date.now() - Math.min(...times);
+    const delayed = stale || age > 5 * 60 * 1000;
+    el.classList.toggle('stale', delayed);
+    $('liveText').textContent = delayed ? `Prices delayed, ${ageFmt(age)} old` : `Live, prices ${ageFmt(age)} old`;
   }
 
   // ---- Data ----
   async function loadCoins() {
     try {
-      const r = await fetch('/v1/coins?live=1', { headers: { accept: 'application/json' } });
+      const r = await fetch('/v1/coins?live=1', { headers: { accept: 'application/json' }, cache: 'no-store' });
       const d = await r.json();
       coins = {}; coinMeta = {}; stale = false;
       for (const c of d.coins) { coinMeta[c.symbol] = c; coins[c.symbol] = c.live; if (c.live?.stale || c.live?.error) stale = true; }

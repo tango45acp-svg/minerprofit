@@ -6,11 +6,25 @@
 const UA = 'minerprofit/1.0 (+https://github.com/)';
 
 export async function fetchJson(url, { timeoutMs = 8000, headers = {} } = {}) {
-  const res = await fetch(url, {
-    headers: { accept: 'application/json', 'user-agent': UA, ...headers },
-    signal: AbortSignal.timeout(timeoutMs),
-  });
-  if (!res.ok) throw new Error(`${new URL(url).host} responded ${res.status}`);
+  const host = new URL(url).host;
+  let res;
+  try {
+    res = await fetch(url, {
+      headers: { accept: 'application/json', 'user-agent': UA, ...headers },
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch (e) {
+    throw new Error(`${host} unreachable (${e.name === 'TimeoutError' ? 'timed out' : e.message})`);
+  }
+  if (!res.ok) {
+    const reason = res.status === 429 ? ' — rate limited' : res.status === 403 ? ' — blocked' : '';
+    const err = new Error(`${host} responded ${res.status}${reason}`);
+    err.status = res.status;
+    const ra = Number(res.headers.get('retry-after'));
+    if (ra > 0) err.retryAfterMs = ra * 1000;
+    else if (res.status === 429) err.retryAfterMs = 60_000;
+    throw err;
+  }
   return res.json();
 }
 
@@ -39,6 +53,29 @@ export async function coingeckoPrices(ids) {
     if (Number.isFinite(usd) && usd > 0) out[id] = usd;
   }
   return out;
+}
+
+/** CoinPaprika — free, no key, separate rate limits from CoinGecko. Returns { [paprikaId]: usd }. */
+export async function coinpaprikaPrices(ids) {
+  const out = {};
+  const results = await Promise.allSettled(
+    ids.map((id) => fetchJson(`https://api.coinpaprika.com/v1/tickers/${encodeURIComponent(id)}?quotes=USD`)),
+  );
+  const errors = [];
+  results.forEach((r, i) => {
+    const usd = r.status === 'fulfilled' ? r.value?.quotes?.USD?.price : null;
+    if (Number.isFinite(usd) && usd > 0) out[ids[i]] = usd;
+    else if (r.status === 'rejected') errors.push(r.reason.message);
+  });
+  if (!Object.keys(out).length) throw new Error(errors[0] || 'coinpaprika returned no prices');
+  return out;
+}
+
+/** Bitcoin USD price from mempool.space (no key). */
+export async function mempoolBtcPrice() {
+  const base = process.env.MEMPOOL_API_URL || 'https://mempool.space/api';
+  const d = await fetchJson(`${base}/v1/prices`);
+  return num(d.USD, 'mempool BTC price');
 }
 
 // ---------- WhatToMine (generic multi-coin fallback) ----------

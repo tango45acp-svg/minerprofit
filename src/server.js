@@ -7,7 +7,7 @@ import { searchHardware } from './hardware.js';
 import { buildPaymentLayer, PRICES } from './payments.js';
 import { openapi, llmsTxt } from './docs.js';
 import { buildMcpServer } from './mcp.js';
-import { setOverride, getOverrides } from './market.js';
+import { setOverride, getOverrides, sourceHealth } from './market.js';
 
 export async function createApp() {
   const app = express();
@@ -21,6 +21,8 @@ export async function createApp() {
     res.set('access-control-allow-headers', '*');
     res.set('access-control-expose-headers', 'payment-required, payment-response, x-payment-response, x-free-calls-remaining');
     if (req.method === 'OPTIONS') return res.sendStatus(204);
+    // Live numbers must never be served from a browser or proxy cache.
+    if (req.path.startsWith('/v1/')) res.set('cache-control', 'no-store');
     next();
   });
 
@@ -28,6 +30,21 @@ export async function createApp() {
 
   // ---------- Free routes ----------
   app.get('/health', (req, res) => res.json({ ok: true }));
+
+  // Which upstream feeds are working, how old their data is, and the last error.
+  // ?refresh=1 pulls every coin once first so a just-woken server has something to report.
+  app.get('/v1/status', async (req, res) => {
+    if (req.query.refresh) await market(Object.keys(COINS)).catch(() => {});
+    const sources = sourceHealth();
+    const failing = Object.entries(sources).filter(([, v]) => !v.ok).map(([k]) => k);
+    res.json({
+      ok: failing.length === 0,
+      failing,
+      uptime_sec: Math.round(process.uptime()),
+      checked_at: new Date().toISOString(),
+      sources,
+    });
+  });
 
   // Humans in a browser get the dashboard; agents and curl get JSON.
   const wantsHtml = (req) => req.accepts(['json', 'html']) === 'html';

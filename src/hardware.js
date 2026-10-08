@@ -22,32 +22,43 @@ export const HARDWARE = [
   { id: 'antminer-s21-pro', name: 'Bitmain Antminer S21 Pro', type: 'asic', maker: 'Bitmain', aliases: ['s21pro'], coins: { BTC: { hashrate: '234TH', watts: 3510 } }, source: MFR },
   { id: 'antminer-s21-xp', name: 'Bitmain Antminer S21 XP', type: 'asic', maker: 'Bitmain', aliases: ['s21xp'], coins: { BTC: { hashrate: '270TH', watts: 3645 } }, source: MFR },
 
-  // ---- GPUs ----
-  {
-    id: 'rtx-5090', name: 'NVIDIA GeForce RTX 5090', type: 'gpu', maker: 'NVIDIA', aliases: ['5090', 'rtx5090'],
-    coins: { PRL: { hashrate: '400TH', watts: 525 } }, source: KRYPTEX,
-  },
-  {
-    id: 'rtx-4090', name: 'NVIDIA GeForce RTX 4090', type: 'gpu', maker: 'NVIDIA', aliases: ['4090', 'rtx4090'],
-    coins: {
-      PRL: { hashrate: '293TH', watts: 450 },
-      RVN: { hashrate: '65MH', watts: 330 },
-      ERG: { hashrate: '265MH', watts: 240 },
-    },
-    source: KRYPTEX,
-  },
-  {
-    id: 'rtx-5080', name: 'NVIDIA GeForce RTX 5080', type: 'gpu', maker: 'NVIDIA', aliases: ['5080', 'rtx5080'],
-    coins: { PRL: { hashrate: '215TH', watts: 260 } }, source: KRYPTEX,
-  },
-  {
-    id: 'rtx-4080-super', name: 'NVIDIA GeForce RTX 4080 Super', type: 'gpu', maker: 'NVIDIA', aliases: ['4080super', 'rtx4080super', '4080s'],
-    coins: { PRL: { hashrate: '203TH', watts: 270 } }, source: KRYPTEX,
-  },
-  {
-    id: 'rtx-5070', name: 'NVIDIA GeForce RTX 5070', type: 'gpu', maker: 'NVIDIA', aliases: ['5070', 'rtx5070'],
-    coins: { PRL: { hashrate: '124TH', watts: 160 } }, source: KRYPTEX,
-  },
+  // ---- GPUs: every RTX 50 and 40 series card ----
+  // [model, extra aliases, PRL TH/s, PRL W, RVN MH/s, RVN W, ERG MH/s, ERG W]
+  ...[
+    ['5090', [], 400, 525, 100.5, 460, 575, 295],
+    ['5080', [], 215, 260, 62.5, 250, 315, 175],
+    ['5070 Ti', ['5070ti'], 179, 210, 55.5, 235, 265.5, 155],
+    ['5070', [], 124, 160, 45.5, 190, 225.5, 115],
+    ['5060 Ti', ['5060ti', '5060ti16gb', '5060ti8gb'], 91, 110, 32, 130, 125.5, 70],
+    ['5060', [], 76, 100, 22.5, 110, 113, 70],
+    ['5050', [], 58, 95, 20.2, 110, 78.5, 75],
+    ['4090', [], 293, 450, 65, 330, 265, 240],
+    ['4080 Super', ['4080super', '4080s'], 203, 270, 52, 260, 180, 180],
+    ['4080', [], 187, 270, 46, 260, 170, 180],
+    ['4070 Ti Super', ['4070tisuper', '4070tis'], 167, 220, 45, 200, 161.5, 190],
+    ['4070 Ti', ['4070ti'], 153, 200, 32, 170, 133, 90],
+    ['4070 Super', ['4070super', '4070s'], 125, 195, 35.2, 200, 140, 190],
+    ['4070', [], 113, 160, 30, 150, 132, 110],
+    ['4060 Ti', ['4060ti', '4060ti16gb', '4060ti8gb'], 86, 125, 19, 110, 88, 70],
+    ['4060', [], 65, 110, 17.9, 91, 73.9, 76],
+  ].map(([model, extra, prl, prlW, rvn, rvnW, erg, ergW]) => {
+    const slug = model.toLowerCase().replace(/\s+/g, '-');
+    const compact = model.toLowerCase().replace(/\s+/g, '');
+    return {
+      id: `rtx-${slug}`,
+      name: `NVIDIA GeForce RTX ${model}`,
+      type: 'gpu',
+      maker: 'NVIDIA',
+      series: model.startsWith('5') ? 'RTX 50' : 'RTX 40',
+      aliases: [compact, `rtx${compact}`, ...extra],
+      coins: {
+        PRL: { hashrate: `${prl}TH`, watts: prlW },
+        RVN: { hashrate: `${rvn}MH`, watts: rvnW },
+        ERG: { hashrate: `${erg}MH`, watts: ergW },
+      },
+      source: KRYPTEX,
+    };
+  }),
 ];
 
 const norm = (s) => String(s).toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -110,6 +121,7 @@ export function describeHardware(h) {
     name: h.name,
     type: h.type,
     maker: h.maker,
+    ...(h.series ? { series: h.series } : {}),
     coins: Object.fromEntries(
       Object.entries(h.coins).map(([sym, s]) => [
         sym,

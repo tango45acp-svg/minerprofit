@@ -175,6 +175,8 @@ export async function market(symbols) {
           sources: r.value.sources,
           stale: r.value.stale,
           as_of: r.value.asOf,
+          price_as_of: r.value.priceAsOf,
+          network_as_of: r.value.networkAsOf,
         }
       : { coin: symbols[i], error: r.reason.message },
   );

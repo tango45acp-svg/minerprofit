@@ -14,6 +14,8 @@ export const MOCK = {
 };
 
 export const down = new Set(); // hosts to simulate as failing
+export const calls = new Map(); // host -> request count
+export const PAPRIKA = { 'btc-bitcoin': 101000, 'kas-kaspa': 0.081, 'rvn-ravencoin': 0.021, 'erg-ergo': 1.01 };
 
 const json = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: { 'content-type': 'application/json' } });
 
@@ -24,13 +26,19 @@ export function installFetchMock() {
     const url = new URL(typeof input === 'string' ? input : input.url);
     // Let local test-server requests through.
     if (url.hostname === '127.0.0.1' || url.hostname === 'localhost') return realFetch(input, init);
-    if (down.has(url.hostname)) return json({ error: 'down' }, 503);
+    calls.set(url.hostname, (calls.get(url.hostname) || 0) + 1);
+    if (down.has(url.hostname)) return json({ error: 'down' }, url.hostname === 'api.coingecko.com' ? 429 : 503);
 
     if (url.hostname === 'api.kaspa.org') {
       if (url.pathname === '/info/hashrate') return json({ hashrate: MOCK.kaspaHashrateTH });
       if (url.pathname === '/info/blockreward') return json({ blockreward: MOCK.kaspaReward });
     }
+    if (url.hostname === 'api.coinpaprika.com') {
+      const id = decodeURIComponent(url.pathname.split('/').pop());
+      return PAPRIKA[id] ? json({ id, quotes: { USD: { price: PAPRIKA[id] } } }) : json({ error: 'id not found' }, 404);
+    }
     if (url.hostname === 'mempool.space') {
+      if (url.pathname.endsWith('/v1/prices')) return json({ USD: 99000 });
       if (url.pathname.endsWith('/mining/hashrate/3d')) return json({ currentHashrate: MOCK.btcHashrate });
       if (url.pathname.includes('/mining/reward-stats/')) return json({ startBlock: 1, endBlock: 144, totalReward: String(MOCK.btcRewardSats * 144) });
     }

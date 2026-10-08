@@ -1,6 +1,6 @@
 import { test, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { installFetchMock, startApp, down, MOCK } from './helpers.js';
+import { installFetchMock, startApp, down, calls, MOCK } from './helpers.js';
 
 process.env.OVERRIDES_FILE = '/nonexistent/overrides.json'; // start with no overrides
 installFetchMock();
@@ -16,6 +16,7 @@ before(async () => {
 after(() => app.close());
 beforeEach(() => {
   down.clear();
+  calls.clear();
   cache.clear();
 });
 
@@ -109,12 +110,69 @@ test('falls back to WhatToMine when the Kaspa API is down', async () => {
   assert.equal(body.market.sources.network, 'whattomine');
 });
 
-test('returns a clean 503 when every price source is down', async () => {
+test('CoinGecko rate-limited: prices come from CoinPaprika', async () => {
   down.add('api.coingecko.com');
+  const { status, body } = await get('/v1/profit?coin=KAS&model=ks0&kwh=0.08');
+  assert.equal(status, 200);
+  assert.equal(body.market.sources.price, 'coinpaprika');
+  assert.equal(body.market.price_usd, 0.081);
+});
+
+test('PRL with CoinGecko and CoinPaprika down: WhatToMine BTC rate x mempool BTC price', async () => {
+  down.add('api.coingecko.com');
+  down.add('api.coinpaprika.com');
+  const { status, body } = await get('/v1/profit?coin=PRL&model=rtx-4090&kwh=0.08');
+  assert.equal(status, 200);
+  assert.equal(body.market.sources.price, 'whattomine_btc_rate');
+  assert.equal(body.market.price_usd, Number((5e-6 * 99000).toPrecision(4)));
+});
+
+test('returns a clean 503 when every price source is down', async () => {
+  for (const h of ['api.coingecko.com', 'api.coinpaprika.com', 'mempool.space']) down.add(h);
   const { status, body } = await get('/v1/profit?coin=PRL&model=rtx-4090&kwh=0.1');
-  // with coingecko down we also lose the BTC price, so expect a clean 503
   assert.equal(status, 503);
   assert.equal(body.error.code, 'data_unavailable');
+});
+
+test('a rate-limited source is not retried on every request', async () => {
+  down.add('api.coingecko.com');
+  await get('/v1/profit?coin=KAS&model=ks0&kwh=0.08');
+  await get('/v1/profit?coin=KAS&model=ks0&kwh=0.08');
+  await get('/v1/profit?coin=KAS&model=ks0&kwh=0.08');
+  assert.equal(calls.get('api.coingecko.com'), 1);
+});
+
+test('stale data is replaced by a fresh fallback, and status reports the failing feed', async () => {
+  await get('/v1/profit?coin=KAS&model=ks0&kwh=0.08'); // prime CoinGecko
+  // age the CoinGecko entry past its TTL, then make it fail
+  const entry = cache.store.get('coingecko');
+  entry.at -= 10 * 60 * 1000;
+  down.add('api.coingecko.com');
+  const { body } = await get('/v1/profit?coin=KAS&model=ks0&kwh=0.08');
+  assert.equal(body.market.sources.price, 'coinpaprika');
+  assert.equal(body.market.stale, false);
+  const st = await get('/v1/status');
+  assert.equal(st.body.ok, false);
+  assert.deepEqual(st.body.failing, ['coingecko']);
+  assert.match(st.body.sources.coingecko.last_error, /429 — rate limited/);
+  assert.ok(st.body.sources.coingecko.retry_in_sec > 0);
+});
+
+test('live endpoints are never cached', async () => {
+  const { headers } = await get('/v1/coins?live=1');
+  assert.equal(headers.get('cache-control'), 'no-store');
+});
+
+test('every RTX 50 and 40 series card is listed', async () => {
+  const { body } = await get('/v1/hardware?type=gpu');
+  const ids = body.hardware.map((h) => h.id);
+  for (const m of ['5090', '5080', '5070-ti', '5070', '5060-ti', '5060', '5050', '4090', '4080-super', '4080', '4070-ti-super', '4070-ti', '4070-super', '4070', '4060-ti', '4060']) {
+    assert.ok(ids.includes(`rtx-${m}`), `missing rtx-${m}`);
+  }
+  const r = await get('/v1/profit?coin=PRL&model=rtx-4070-ti-super:2,4060ti&kwh=0.08');
+  assert.equal(r.status, 200);
+  assert.equal(r.body.inputs.hashrate, '420 TH/s');
+  assert.equal(r.body.inputs.watts, 565);
 });
 
 test('what-if values let agents price a coin with no live data', async () => {
@@ -131,6 +189,7 @@ test('compare ranks every coin a 4090 can mine', async () => {
   const { status, body } = await get('/v1/compare?model=rtx-4090&kwh=0.1');
   assert.equal(status, 200);
   assert.deepEqual(body.ranking.map((r) => r.coin).sort(), ['ERG', 'PRL', 'RVN']);
+  assert.equal(body.rig[0].id, 'rtx-4090');
   const profits = body.ranking.map((r) => r.daily_profit_usd);
   assert.deepEqual(profits, [...profits].sort((a, b) => b - a));
   assert.equal(body.best.coin, body.ranking[0].coin);
