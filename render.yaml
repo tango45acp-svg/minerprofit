@@ -1,0 +1,35 @@
+# Render Blueprint — Dashboard > New > Blueprint, point it at your repo.
+services:
+  - type: web
+    name: minerprofit
+    runtime: node
+    # Free instances sleep after inactivity (slow first call for agents).
+    # Starter keeps it always on; switch to "free" while testing if you like.
+    plan: starter
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: PAY_TO              # your Base wallet address (receives USDC)
+        sync: false
+      - key: X402_NETWORK        # base-sepolia for testing, base for real money
+        value: base-sepolia
+      - key: CDP_API_KEY_ID      # needed only for X402_NETWORK=base
+        sync: false
+      - key: CDP_API_KEY_SECRET
+        sync: false
+      - key: PUBLIC_URL          # e.g. https://minerprofit.onrender.com (used in docs links)
+        sync: false
+      - key: COINGECKO_API_KEY   # optional free demo key, raises rate limits
+        sync: false
+      - key: ADMIN_TOKEN
+        generateValue: true
+      - key: FREE_CALLS_PER_DAY
+        value: "25"
+      - key: PRICE_PROFIT
+        value: "$0.002"
+      - key: PRICE_COMPARE
+        value: "$0.005"

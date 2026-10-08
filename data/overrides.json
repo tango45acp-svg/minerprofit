@@ -1,0 +1,3 @@
+{
+  "_readme": "Manual fallback data per coin, used only when live sources fail (or always, with \"force\": true). Edit here or POST /admin/overrides/:coin. Fields: networkHashrate (e.g. \"25EH\"), blockReward, blockTimeSec, priceUsd, force, note."
+}
