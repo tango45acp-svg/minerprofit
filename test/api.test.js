@@ -168,6 +168,15 @@ test('coins live endpoint', async () => {
   assert.equal(kas.live.price_usd, MOCK.prices.kaspa);
 });
 
+test('browsers get the dashboard; paid links redirect to it', async () => {
+  const page = await fetch(app.base + '/', { headers: { accept: 'text/html,*/*' } });
+  assert.match(page.headers.get('content-type'), /text\/html/);
+  assert.match(await page.text(), /MinerProfit/);
+  const r = await fetch(app.base + '/v1/compare?model=rtx-4090&kwh=0.08', { headers: { accept: 'text/html,*/*' }, redirect: 'manual' });
+  assert.equal(r.status, 302);
+  assert.equal(r.headers.get('location'), '/?model=rtx-4090&kwh=0.08');
+});
+
 // ---------- MCP ----------
 
 async function mcp(method, params, id = 1) {

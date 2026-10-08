@@ -113,7 +113,7 @@ export function describeHardware(h) {
     coins: Object.fromEntries(
       Object.entries(h.coins).map(([sym, s]) => [
         sym,
-        { hashrate: formatHashrate(parseHashrate(s.hashrate)), watts: s.watts },
+        { hashrate: formatHashrate(parseHashrate(s.hashrate)), hashrate_hs: parseHashrate(s.hashrate), watts: s.watts },
       ]),
     ),
     spec_source: h.source,

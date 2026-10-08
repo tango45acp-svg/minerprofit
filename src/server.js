@@ -1,5 +1,5 @@
 import express from 'express';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { profit, compare, market, ApiError } from './service.js';
 import { listCoins, COINS } from './coins.js';
@@ -29,7 +29,18 @@ export async function createApp() {
   // ---------- Free routes ----------
   app.get('/health', (req, res) => res.json({ ok: true }));
 
+  // Humans in a browser get the dashboard; agents and curl get JSON.
+  const wantsHtml = (req) => req.accepts(['json', 'html']) === 'html';
+  const dashboardFile = fileURLToPath(new URL('./dashboard.html', import.meta.url));
+  app.get('/dashboard', (req, res) => res.sendFile(dashboardFile));
+  app.get(['/v1/profit', '/v1/compare'], (req, res, next) => {
+    if (!wantsHtml(req)) return next();
+    const qs = new URLSearchParams(req.query).toString();
+    res.redirect(302, `/${qs ? `?${qs}` : ''}`);
+  });
+
   app.get('/', (req, res) => {
+    if (wantsHtml(req)) return res.sendFile(dashboardFile);
     const b = baseUrl(req);
     res.json({
       name: 'MinerProfit',

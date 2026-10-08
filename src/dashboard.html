@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MinerProfit</title>
+<meta name="description" content="Live crypto mining profit for your GPUs and ASICs at your electricity price.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDF1F4; --panel:#FFFFFF; --ink:#16212C; --muted:#5A6875; --line:#D6DDE4;
+  --power:#B87A00; --power-soft:#F6E7C4; --gain:#11744A; --gain-soft:#D7EEE2; --loss:#B42318; --loss-soft:#F7DCD9;
+  --focus:#2C64C9;
+  --display:"Barlow Semi Condensed", "Barlow", system-ui, sans-serif;
+  --body:"Barlow", system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#131A21; --panel:#1B242D; --ink:#E7ECF1; --muted:#97A4B1; --line:#2C3843;
+    --power:#E5A92A; --power-soft:#3A2F14; --gain:#4CC98A; --gain-soft:#163628; --loss:#F07167; --loss-soft:#3D1F1D;
+    --focus:#7FA7F0;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 var(--body);font-variant-numeric:tabular-nums}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.wrap{max-width:1040px;margin:0 auto;padding:16px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:center;padding:4px 0 20px}
+.brand{font:700 22px/1 var(--display);letter-spacing:.01em}
+.live{font-size:14px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--gain)}
+.live.stale .dot{background:var(--power)}
+.grid{display:grid;gap:16px}
+@media (min-width:860px){.grid{grid-template-columns:360px 1fr;align-items:start}}
+@media (max-width:859px){.grid>.stack{display:contents}#hero{order:1}#ratePanel{order:2}#rigPanel{order:3}#rankPanel{order:4}#mktPanel{order:5}#apiPanel{order:6}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+h2{font:600 18px/1.2 var(--display);margin:0 0 12px}
+.sub{color:var(--muted);font-size:14px;margin:0}
+
+/* Electricity meter */
+.rate{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0 10px}
+.rate-val{font:700 48px/1 var(--display);text-align:center}
+.rate-val small{display:block;font:500 14px var(--body);color:var(--muted);margin-top:4px}
+.step{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:transparent;font-size:22px;cursor:pointer}
+.step:active{transform:scale(.97)}
+input[type=range]{width:100%;accent-color:var(--power);height:28px}
+.rate-hint{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+
+/* Rig */
+.rig{list-style:none;margin:0 0 12px;padding:0}
+.rig li{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.rig li:first-child{padding-top:0}
+.rig .name{font-weight:600}
+.rig .spec{grid-column:1;font-size:13px;color:var(--muted)}
+.qty{grid-row:1/3;grid-column:2;display:flex;align-items:center;gap:6px}
+.qty button{width:36px;height:36px;border-radius:8px;border:1px solid var(--line);background:transparent;cursor:pointer;font-size:18px}
+.qty span{min-width:20px;text-align:center;font-weight:600}
+select{width:100%;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--panel);padding:0 12px}
+.empty{color:var(--muted);font-size:15px;padding:4px 0 12px}
+
+/* Result */
+.hero{padding:20px 18px}
+.hero-label{font-size:15px;color:var(--muted);margin:0 0 4px}
+.hero-num{font:700 64px/1 var(--display);letter-spacing:-.01em;margin:0}
+.hero-num.neg{color:var(--loss)}
+.hero-num.pos{color:var(--gain)}
+.hero-num small{font:500 20px var(--display);color:var(--muted);margin-left:6px}
+.equation{display:flex;flex-wrap:wrap;gap:6px 14px;margin:14px 0 0;font-size:15px;color:var(--muted)}
+.equation b{color:var(--ink);font-weight:600}
+.period{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}
+.period div{background:var(--bg);border-radius:10px;padding:10px 12px}
+.period span{display:block;font-size:13px;color:var(--muted)}
+.period strong{font:600 22px/1.2 var(--display)}
+
+/* Ranking with break-even meters */
+.coin{padding:14px 0;border-top:1px solid var(--line)}
+.coin:first-of-type{border-top:0;padding-top:4px}
+.coin-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.coin-name{font:600 19px/1.2 var(--display)}
+.coin-name em{font-style:normal;font:500 14px var(--body);color:var(--muted);margin-left:6px}
+.coin-profit{font:700 22px/1 var(--display)}
+.coin-profit.pos{color:var(--gain)} .coin-profit.neg{color:var(--loss)}
+.coin-meta{font-size:13px;color:var(--muted);margin:4px 0 10px}
+.meter{position:relative;height:14px;border-radius:7px;overflow:hidden;background:var(--loss-soft)}
+.meter .ok{position:absolute;inset:0 auto 0 0;background:var(--gain-soft)}
+.meter .be{position:absolute;top:0;bottom:0;width:2px;background:var(--gain)}
+.needle{position:absolute;top:-4px;width:4px;height:22px;border-radius:2px;background:var(--power);transform:translateX(-2px)}
+.meter-wrap{position:relative;padding:4px 0}
+.meter-legend{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:6px}
+.meter-legend .you{color:var(--power);font-weight:600}
+.note{font-size:13px;color:var(--muted);margin:12px 0 0}
+
+/* Market */
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-weight:500;color:var(--muted);text-align:right;padding:6px 0;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+td{text-align:right;padding:9px 0;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+
+/* Agents */
+.code{display:flex;gap:8px;align-items:stretch;margin:10px 0}
+.code code{flex:1;min-width:0;overflow-wrap:anywhere;background:var(--bg);border-radius:10px;padding:10px 12px;font:500 13px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}
+.copy{border:1px solid var(--line);background:transparent;border-radius:10px;padding:0 14px;cursor:pointer;font-weight:500}
+.links{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:14px;margin-top:6px}
+a{color:var(--focus)}
+.err{background:var(--loss-soft);color:var(--loss);border-radius:10px;padding:12px;font-size:15px}
+.stack{display:grid;gap:16px}
+footer{color:var(--muted);font-size:13px;margin-top:24px;max-width:70ch}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (prefers-reduced-motion:no-preference){.needle{transition:left .25s ease}.meter .ok,.meter .be{transition:all .25s ease}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">MinerProfit</div>
+    <div class="live" id="live"><span class="dot" aria-hidden="true"></span><span id="liveText">Loading live data</span></div>
+  </header>
+
+  <div class="grid">
+    <div class="stack">
+      <section class="panel" id="ratePanel" aria-labelledby="rateH">
+        <h2 id="rateH">Your electricity price</h2>
+        <div class="rate">
+          <button class="step" id="rateDown" aria-label="Lower price by one cent">−</button>
+          <div class="rate-val" aria-live="polite"><span id="rateOut">$0.08</span><small>per kWh</small></div>
+          <button class="step" id="rateUp" aria-label="Raise price by one cent">+</button>
+        </div>
+        <label class="sr" for="rate">Electricity price in dollars per kilowatt hour</label>
+        <input type="range" id="rate" min="0" max="0.40" step="0.005" value="0.08">
+        <div class="rate-hint"><span>Free</span><span>$0.40</span></div>
+      </section>
+
+      <section class="panel" id="rigPanel" aria-labelledby="rigH">
+        <h2 id="rigH">Your rig</h2>
+        <ul class="rig" id="rig"></ul>
+        <label class="sr" for="add">Add hardware</label>
+        <select id="add"><option value="">Add a GPU or miner…</option></select>
+      </section>
+    </div>
+
+    <div class="stack">
+      <section class="panel hero" aria-live="polite" id="hero">
+        <p class="hero-label">Loading…</p>
+      </section>
+
+      <section class="panel" id="rankPanel" aria-labelledby="rankH">
+        <h2 id="rankH">Every coin your rig can mine</h2>
+        <p class="sub">The bar is your break-even meter. Green is where mining pays; your price is the amber needle.</p>
+        <div id="rank" style="margin-top:14px"></div>
+      </section>
+
+      <section class="panel" id="mktPanel" aria-labelledby="mktH">
+        <h2 id="mktH">Live market</h2>
+        <div id="market"></div>
+      </section>
+
+      <section class="panel" id="apiPanel" aria-labelledby="apiH">
+        <h2 id="apiH">Use this from an AI agent</h2>
+        <p class="sub">Agents get the same numbers as JSON. They pay per call in USDC on Base with x402, after 25 free calls a day. No signup or API key.</p>
+        <div class="code"><code id="apiCall"></code><button class="copy" id="copy">Copy</button></div>
+        <div class="links">
+          <a href="/llms.txt">Agent instructions</a>
+          <a href="/openapi.json">OpenAPI spec</a>
+          <a href="/v1/hardware" id="hwLink">Hardware list</a>
+          <span>MCP server: <code style="font-size:13px">/mcp</code></span>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <footer>Estimates assume today's price, network hashrate and block reward hold steady, a 1% pool fee, and 24-hour runtime. Real payouts drift. GPU specs are tuned figures from Kryptex Pool; ASIC specs are manufacturer stock numbers.</footer>
+</div>
+
+<script>
+(() => {
+  const POOL_FEE = 1;
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const norm = (s) => String(s).toLowerCase().replace(/[^a-z0-9]/g, '');
+  const usd = (n, d = 2) => (n < 0 ? '−$' : '$') + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const kwhFmt = (n) => '$' + (Math.abs(n * 100 - Math.round(n * 100)) < 1e-9 || n >= 0.1 ? n.toFixed(2) : n.toFixed(3));
+  const coinFmt = (n) => n >= 100 ? n.toLocaleString('en-US', { maximumFractionDigits: 1 }) : n >= 1 ? n.toFixed(3) : n.toPrecision(3);
+  const priceFmt = (n) => n >= 1000 ? '$' + Math.round(n).toLocaleString('en-US') : n >= 1 ? '$' + n.toFixed(2) : '$' + n.toPrecision(3);
+  const hashFmt = (hs) => { const u = [['EH',1e18],['PH',1e15],['TH',1e12],['GH',1e9],['MH',1e6],['KH',1e3]]; for (const [k,v] of u) if (hs >= v) return +(hs/v).toPrecision(4) + ' ' + k + '/s'; return hs + ' H/s'; };
+
+  let hardware = [], coins = {}, coinMeta = {}, rig = [], kwh = 0.08, lastFetch = 0, stale = false;
+
+  // ---- URL state ----
+  function readUrl() {
+    const p = new URLSearchParams(location.search);
+    const k = parseFloat(p.get('kwh'));
+    if (k >= 0 && k <= 5) kwh = k;
+    return p.get('model') || 'rtx-4090';
+  }
+  function writeUrl() {
+    const p = new URLSearchParams();
+    if (rig.length) p.set('model', modelString());
+    p.set('kwh', String(+kwh.toFixed(3)));
+    history.replaceState(null, '', '/?' + p.toString());
+  }
+  const modelString = () => rig.map((r) => r.count > 1 ? `${r.hw.id}:${r.count}` : r.hw.id).join(',');
+  function findHw(q) {
+    const n = norm(q);
+    return hardware.find((h) => norm(h.id) === n) || hardware.find((h) => norm(h.id).endsWith(n)) || hardware.find((h) => norm(h.name).includes(n));
+  }
+  function parseModel(s) {
+    const out = [];
+    for (const part of s.split(',').map((x) => x.trim()).filter(Boolean)) {
+      const [name, c] = part.split(/[:*]/);
+      const hw = findHw(name);
+      if (!hw) continue;
+      const count = Math.max(1, Math.min(999, parseInt(c || '1', 10) || 1));
+      const existing = out.find((r) => r.hw.id === hw.id);
+      if (existing) existing.count += count; else out.push({ hw, count });
+    }
+    return out;
+  }
+
+  // ---- Math (mirrors the API) ----
+  function calc(sym) {
+    const m = coins[sym];
+    let hs = 0, w = 0;
+    for (const { hw, count } of rig) { const s = hw.coins[sym]; if (!s) return null; hs += s.hashrate_hs * count; w += s.watts * count; }
+    if (!m || m.error) return { sym, hs, w, unavailable: true };
+    const coinsDay = hs / m.network_hashrate_hs * (86400 / m.block_time_sec) * m.block_reward * (1 - POOL_FEE / 100);
+    const revenue = coinsDay * m.price_usd;
+    const kwhDay = w / 1000 * 24;
+    const power = kwhDay * kwh;
+    return { sym, hs, w, coinsDay, revenue, power, profit: revenue - power, breakeven: kwhDay ? revenue / kwhDay : Infinity, price: m.price_usd, stale: m.stale };
+  }
+
+  // ---- Render ----
+  function renderRate() {
+    $('rateOut').textContent = kwhFmt(kwh);
+    $('rate').value = String(Math.min(0.4, kwh));
+  }
+
+  function renderRig() {
+    const ul = $('rig');
+    if (!rig.length) { ul.innerHTML = '<li class="empty" style="display:block;border:0">Add a GPU or miner to see what it earns.</li>'; return; }
+    ul.innerHTML = rig.map((r, i) => {
+      const specs = Object.entries(r.hw.coins).map(([s, v]) => `${esc(s)} ${esc(v.hashrate)}`).join(', ');
+      const watts = Math.max(...Object.values(r.hw.coins).map((v) => v.watts));
+      return `<li><span class="name">${esc(r.hw.name)}</span><span class="spec">${specs} · up to ${watts} W</span>
+        <span class="qty"><button data-i="${i}" data-d="-1" aria-label="Remove one ${esc(r.hw.name)}">−</button><span aria-label="Count">${r.count}</span><button data-i="${i}" data-d="1" aria-label="Add one ${esc(r.hw.name)}">+</button></span></li>`;
+    }).join('');
+  }
+
+  function renderAdd() {
+    const groups = { gpu: 'GPUs', asic: 'ASIC miners' };
+    $('add').innerHTML = '<option value="">Add a GPU or miner…</option>' + Object.entries(groups).map(([t, label]) =>
+      `<optgroup label="${label}">` + hardware.filter((h) => h.type === t).map((h) => `<option value="${esc(h.id)}">${esc(h.name)} (${Object.keys(h.coins).join(', ')})</option>`).join('') + '</optgroup>').join('');
+  }
+
+  function renderResults() {
+    const hero = $('hero'), rank = $('rank');
+    if (!rig.length) { hero.innerHTML = '<p class="hero-label">Pick your hardware to see today\'s profit.</p>'; rank.innerHTML = ''; return; }
+    const shared = Object.keys(rig[0].hw.coins).filter((s) => rig.every((r) => r.hw.coins[s]));
+    if (!shared.length) {
+      hero.innerHTML = '<p class="hero-label">These devices don\'t mine the same coin.</p><p class="sub">Remove the GPUs or the ASICs to compare them separately.</p>';
+      rank.innerHTML = ''; return;
+    }
+    if (!Object.keys(coins).length) { hero.innerHTML = '<p class="hero-label">Loading live prices…</p>'; return; }
+    const rows = shared.map(calc).filter(Boolean);
+    const ok = rows.filter((r) => !r.unavailable).sort((a, b) => b.profit - a.profit);
+    const best = ok[0];
+    if (!best) { hero.innerHTML = '<div class="err">Live data for these coins is unavailable right now. It refreshes every minute.</div>'; rank.innerHTML = ''; return; }
+
+    const cls = best.profit >= 0 ? 'pos' : 'neg';
+    hero.innerHTML = `
+      <p class="hero-label">${best.profit >= 0 ? 'Best right now' : 'Loses money at this price'}: ${esc(coinMeta[best.sym]?.name || best.sym)} at ${hashFmt(best.hs)} and ${best.w.toLocaleString()} W</p>
+      <p class="hero-num ${cls}">${usd(best.profit)}<small>per day</small></p>
+      <div class="equation"><span>Earned <b>${usd(best.revenue)}</b></span><span>Power <b>${usd(best.power)}</b></span><span>Mined <b>${coinFmt(best.coinsDay)} ${esc(best.sym)}</b></span></div>
+      <div class="period">
+        <div><span>Per month</span><strong>${usd(best.profit * 30, 0)}</strong></div>
+        <div><span>Stops paying above</span><strong>${kwhFmt(best.breakeven)}/kWh</strong></div>
+      </div>`;
+
+    const scale = Math.max(0.3, kwh * 1.5, ...ok.map((r) => Math.min(r.breakeven, 1.2) * 1.1));
+    rank.innerHTML = ok.map((r) => {
+      const bePct = Math.min(100, r.breakeven / scale * 100);
+      const youPct = Math.min(100, kwh / scale * 100);
+      const c = r.profit >= 0 ? 'pos' : 'neg';
+      return `<div class="coin">
+        <div class="coin-head"><span class="coin-name">${esc(coinMeta[r.sym]?.name || r.sym)}<em>${esc(r.sym)}</em></span><span class="coin-profit ${c}">${usd(r.profit)}/day</span></div>
+        <div class="coin-meta">${hashFmt(r.hs)} · ${r.w.toLocaleString()} W · earns ${usd(r.revenue)}, power ${usd(r.power)}</div>
+        <div class="meter-wrap" role="img" aria-label="Break-even at ${kwhFmt(r.breakeven)} per kWh; your price ${kwhFmt(kwh)}">
+          <div class="meter"><div class="ok" style="width:${bePct}%"></div><div class="be" style="left:calc(${bePct}% - 1px)"></div></div>
+          <div class="needle" style="left:${youPct}%"></div>
+        </div>
+        <div class="meter-legend"><span class="you">You ${kwhFmt(kwh)}</span><span>Break-even ${isFinite(r.breakeven) ? kwhFmt(r.breakeven) : '—'}</span></div>
+      </div>`;
+    }).join('') + rows.filter((r) => r.unavailable).map((r) => `<p class="note">${esc(r.sym)}: live data unavailable right now.</p>`).join('');
+  }
+
+  function renderMarket() {
+    const rowsHtml = Object.values(coinMeta).map((c) => {
+      const m = coins[c.symbol];
+      if (!m || m.error) return `<tr><td>${esc(c.name)}</td><td colspan="2">Unavailable</td></tr>`;
+      return `<tr><td>${esc(c.name)} <span style="color:var(--muted)">${esc(c.symbol)}</span></td><td>${priceFmt(m.price_usd)}</td><td>${hashFmt(m.network_hashrate_hs)}</td></tr>`;
+    }).join('');
+    $('market').innerHTML = `<table><thead><tr><th>Coin</th><th>Price</th><th>Network</th></tr></thead><tbody>${rowsHtml}</tbody></table>`;
+  }
+
+  function renderApi() {
+    const p = new URLSearchParams({ model: modelString() || 'rtx-4090', kwh: String(+kwh.toFixed(3)) });
+    $('apiCall').textContent = `GET ${location.origin}/v1/compare?${p.toString().replace(/%2C/g, ',').replace(/%3A/g, ':')}`;
+  }
+
+  function renderAll() { renderRate(); renderRig(); renderResults(); renderApi(); writeUrl(); }
+
+  function renderLive() {
+    const el = $('live');
+    if (!lastFetch) return;
+    const s = Math.round((Date.now() - lastFetch) / 1000);
+    el.classList.toggle('stale', stale);
+    $('liveText').textContent = (stale ? 'Some data delayed · ' : 'Live · ') + (s < 60 ? `updated ${s}s ago` : `updated ${Math.round(s / 60)}m ago`);
+  }
+
+  // ---- Data ----
+  async function loadCoins() {
+    try {
+      const r = await fetch('/v1/coins?live=1', { headers: { accept: 'application/json' } });
+      const d = await r.json();
+      coins = {}; coinMeta = {}; stale = false;
+      for (const c of d.coins) { coinMeta[c.symbol] = c; coins[c.symbol] = c.live; if (c.live?.stale || c.live?.error) stale = true; }
+      lastFetch = Date.now();
+      renderResults(); renderMarket(); renderLive();
+    } catch {
+      $('liveText').textContent = 'Couldn\'t reach live data. Retrying';
+      $('live').classList.add('stale');
+    }
+  }
+
+  async function init() {
+    const initialModel = readUrl();
+    renderRate();
+    try {
+      const r = await fetch('/v1/hardware', { headers: { accept: 'application/json' } });
+      hardware = (await r.json()).hardware;
+    } catch { $('hero').innerHTML = '<div class="err">Couldn\'t load the hardware list. Refresh to try again.</div>'; return; }
+    rig = parseModel(initialModel);
+    renderAdd(); renderAll();
+    await loadCoins();
+    setInterval(loadCoins, 60000);
+    setInterval(renderLive, 5000);
+  }
+
+  // ---- Events ----
+  const setKwh = (v) => { kwh = Math.max(0, Math.min(5, Math.round(v * 1000) / 1000)); renderRate(); renderResults(); renderApi(); writeUrl(); };
+  $('rate').addEventListener('input', (e) => setKwh(parseFloat(e.target.value)));
+  $('rateDown').addEventListener('click', () => setKwh(kwh - 0.01));
+  $('rateUp').addEventListener('click', () => setKwh(kwh + 0.01));
+  $('rig').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-i]'); if (!b) return;
+    const r = rig[+b.dataset.i]; r.count += +b.dataset.d;
+    if (r.count <= 0) rig.splice(+b.dataset.i, 1);
+    renderAll();
+  });
+  $('add').addEventListener('change', (e) => {
+    const hw = hardware.find((h) => h.id === e.target.value); e.target.value = '';
+    if (!hw) return;
+    const ex = rig.find((r) => r.hw.id === hw.id);
+    if (ex) ex.count++; else rig.push({ hw, count: 1 });
+    renderAll();
+  });
+  $('copy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText($('apiCall').textContent.replace(/^GET /, '')); $('copy').textContent = 'Copied'; }
+    catch { $('copy').textContent = 'Select it'; }
+    setTimeout(() => ($('copy').textContent = 'Copy'), 1500);
+  });
+
+  init();
+})();
+</script>
+</body>
+</html>
