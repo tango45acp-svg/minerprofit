@@ -1,0 +1,10 @@
+{
+  "name": "pearl-rigs-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pearl (PRL) mining dashboard: HeroMiners stats + Govee plug watts, refreshed every 5 minutes",
+  "type": "module",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=20" }
+}

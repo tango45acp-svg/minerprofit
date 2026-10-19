@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pearl Rigs</title>
+<meta name="theme-color" content="#10131b" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f3f4f8" media="(prefers-color-scheme: light)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: status header, summary tiles, 24h chart, one card per rig, plugs, payouts, settings. Phone-first single column, two columns on desktop. */
+:root {
+  --bg: #f3f4f8; --surface: #ffffff; --sunk: #eceef4; --ink: #191c27; --muted: #5f667a; --line: #dde0e9;
+  --accent: #3d58c4; --accent-2: #a46cc9; --accent-soft: rgba(61, 88, 196, .12);
+  --good: #17895a; --warn: #b77b06; --bad: #c63d33;
+  --f-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 14px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #10131b; --surface: #181c27; --sunk: #141824; --ink: #e7e9f1; --muted: #9ba1b5; --line: #272c3b;
+  --accent: #8ea0ff; --accent-2: #d2a2ef; --accent-soft: rgba(142, 160, 255, .14);
+  --good: #4fcf91; --warn: #f0b84a; --bad: #ff7b6e; color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #10131b; --surface: #181c27; --sunk: #141824; --ink: #e7e9f1; --muted: #9ba1b5; --line: #272c3b;
+  --accent: #8ea0ff; --accent-2: #d2a2ef; --accent-soft: rgba(142, 160, 255, .14);
+  --good: #4fcf91; --warn: #f0b84a; --bad: #ff7b6e; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--f-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: calc(env(safe-area-inset-top, 0px) + 18px) calc(env(safe-area-inset-bottom, 0px) + 40px);
+}
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 20px; }
+h1, h2 { font-family: var(--f-display); text-wrap: balance; margin: 0; letter-spacing: -.01em; }
+h1 { font-size: 1.9rem; font-weight: 700; line-height: 1.1; }
+h2 { font-size: 1.15rem; font-weight: 700; }
+.num, .mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.label { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+button { font: inherit; color: inherit; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* header */
+header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.brand { display: grid; gap: 4px; min-width: 0; }
+.brand .sub { font-size: .85rem; color: var(--muted); overflow-wrap: anywhere; }
+.status { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: .8rem; font-weight: 600; background: var(--sunk); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.pill .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.pill.good { color: var(--good); } .pill.warn { color: var(--warn); } .pill.bad { color: var(--bad); }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 5px 12px; font-size: .82rem; font-weight: 600; cursor: pointer; }
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn:disabled { opacity: .5; cursor: default; }
+
+/* summary tiles */
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 760px) { .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; display: grid; gap: 4px; align-content: start; min-width: 0; }
+.tile .v { font-family: var(--f-display); font-weight: 700; font-size: 1.6rem; line-height: 1.1; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.tile .v small { font-family: var(--f-body); font-size: .8rem; font-weight: 500; color: var(--muted); margin-left: 3px; }
+.tile .s { font-size: .8rem; color: var(--muted); }
+.tile.hero { grid-column: 1 / -1; background: linear-gradient(135deg, var(--accent-soft), transparent 70%), var(--surface); }
+.tile.hero .v { font-size: 2.3rem; }
+.pos { color: var(--good); } .neg { color: var(--bad); }
+
+/* panels */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 12px; min-width: 0; align-content: start; }
+.panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.chart text { fill: var(--muted); font: 11px var(--f-mono); }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .78rem; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+
+.two { display: grid; gap: 20px; }
+@media (min-width: 900px) { .two { grid-template-columns: 1fr 1fr; } }
+
+/* rigs */
+.rigs { display: grid; gap: 12px; }
+@media (min-width: 760px) { .rigs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.rig { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 12px; min-width: 0; position: relative; overflow: hidden; }
+.rig::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--good); }
+.rig.warn::before { background: var(--warn); } .rig.bad::before { background: var(--bad); }
+.rig-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.rig-head h3 { margin: 0; font: 700 1.1rem/1.2 var(--f-display); overflow-wrap: anywhere; }
+.rig-head .w { font-size: .78rem; color: var(--muted); font-family: var(--f-mono); overflow-wrap: anywhere; }
+.kv { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.kv div { display: grid; gap: 2px; min-width: 0; }
+.kv b { font: 500 1.02rem var(--f-mono); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.kv span { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.spark { width: 100%; height: 44px; display: block; }
+
+/* lists */
+.rows { display: grid; }
+.row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); font-size: .9rem; align-items: baseline; }
+.row:first-child { border-top: 0; }
+.row .r { font-family: var(--f-mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.row .l { min-width: 0; overflow-wrap: anywhere; }
+.bar { height: 8px; border-radius: 999px; background: var(--sunk); overflow: hidden; border: 1px solid var(--line); }
+.bar > i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius: 999px; }
+.note { font-size: .85rem; color: var(--muted); background: var(--sunk); border: 1px dashed var(--line); border-radius: 10px; padding: 10px 12px; }
+.note.warn { color: var(--ink); border-color: var(--warn); }
+
+/* settings */
+details.panel > summary { cursor: pointer; list-style: none; font: 700 1.05rem var(--f-display); display: flex; justify-content: space-between; gap: 12px; }
+details.panel > summary::-webkit-details-marker { display: none; }
+details.panel > summary::after { content: " +"; color: var(--muted); }
+details[open].panel > summary::after { content: " –"; }
+.set { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--sunk); }
+.set .grid { display: grid; gap: 10px; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .set .grid { grid-template-columns: 1.2fr 1.2fr .8fr; } }
+.set label { display: grid; gap: 4px; font-size: .78rem; color: var(--muted); font-weight: 600; }
+input, select { font: 15px var(--f-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0; }
+footer { font-size: .8rem; color: var(--muted); display: grid; gap: 4px; }
+.skeleton { color: var(--muted); }
+@media (prefers-reduced-motion: no-preference) { .rig, .tile { transition: border-color .2s; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <span class="label">Pearl · HeroMiners</span>
+      <h1>Pearl Rigs</h1>
+      <span class="sub mono" id="wallet">Loading wallet…</span>
+    </div>
+    <div class="status">
+      <span class="pill" id="live"><span class="dot"></span><span id="liveText">Connecting</span></span>
+      <span class="pill" id="price">PRL —</span>
+      <button class="btn" id="refresh" type="button">Refresh now</button>
+    </div>
+  </header>
+
+  <section class="tiles" id="tiles" aria-label="Summary">
+    <div class="tile hero"><span class="label">Net profit, last 24h</span><span class="v skeleton">—</span><span class="s">Waiting for the first pool check</span></div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-chart">
+    <div class="panel-head">
+      <h2 id="h-chart">Hashrate, last 24 hours</h2>
+      <div class="legend" id="legend"></div>
+    </div>
+    <svg class="chart" id="chart" viewBox="0 0 640 220" role="img" aria-label="Hashrate over the last 24 hours"></svg>
+  </section>
+
+  <section aria-labelledby="h-rigs" style="display:grid;gap:12px">
+    <div class="panel-head"><h2 id="h-rigs">Rigs</h2><span class="muted" style="font-size:.85rem" id="rigNote"></span></div>
+    <div class="rigs" id="rigs"><div class="rig"><span class="muted">Rigs appear after the first pool check.</span></div></div>
+  </section>
+
+  <div class="two">
+    <section class="panel" aria-labelledby="h-power">
+      <div class="panel-head"><h2 id="h-power">Govee plugs</h2><span class="muted mono" style="font-size:.8rem" id="rateNote"></span></div>
+      <div id="plugs" class="rows"><span class="muted">Checking plugs…</span></div>
+      <div id="plugNote"></div>
+    </section>
+    <section class="panel" aria-labelledby="h-pay">
+      <div class="panel-head"><h2 id="h-pay">Balance & payouts</h2></div>
+      <div id="pay"><span class="muted">Loading…</span></div>
+    </section>
+  </div>
+
+  <details class="panel" id="settings">
+    <summary>Rig names, plugs and power estimates</summary>
+    <p class="muted" style="margin:0;font-size:.88rem">Saved in this browser only. Pick which Govee plug each rig is on so its watts and efficiency show on the rig card. The estimate is used when a plug doesn't report watts.</p>
+    <div id="setList" style="display:grid;gap:10px"></div>
+  </details>
+
+  <footer>
+    <span id="foot">Updates every 5 minutes.</span>
+    <span id="errs"></span>
+  </footer>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  let data = null;
+
+  // ----- per-browser settings -----
+  const KEY = 'pearl-rigs-settings-v1';
+  let settings = {};
+  try { settings = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { settings = {}; }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(settings)); } catch {} };
+  const rigSet = (name) => (settings[name] ||= {});
+
+  // ----- formatting -----
+  function fmtHash(h) {
+    if (h == null || !Number.isFinite(h)) return '—';
+    const u = ['H/s', 'KH/s', 'MH/s', 'GH/s', 'TH/s', 'PH/s', 'EH/s'];
+    let i = 0; while (Math.abs(h) >= 1000 && i < u.length - 1) { h /= 1000; i++; }
+    return `${h.toFixed(h >= 100 ? 0 : 1)} ${u[i]}`;
+  }
+  const hashParts = (h) => { const [n, u] = fmtHash(h).split(' '); return { n, u }; };
+  const usd = (v, d = 2) => (v == null || !Number.isFinite(v) ? '—' : `${v < 0 ? '−' : ''}$${Math.abs(v).toFixed(d)}`);
+  const prl = (v, d = 3) => (v == null || !Number.isFinite(v) ? '—' : v.toFixed(d));
+  const watts = (w) => (w == null || !Number.isFinite(w) ? '—' : `${Math.round(w).toLocaleString()} W`);
+  function ago(t) {
+    if (!t) return 'never';
+    const s = Math.max(0, Math.round((Date.now() - t) / 1000));
+    if (s < 60) return `${s}s ago`;
+    const m = Math.round(s / 60); if (m < 60) return `${m} min ago`;
+    const h = Math.floor(m / 60); return `${h}h ${m % 60}m ago`;
+  }
+  const shortAddr = (a) => (a && a.length > 20 ? `${a.slice(0, 10)}…${a.slice(-8)}` : a || '');
+
+  // ----- data shaping -----
+  function plugFor(worker) {
+    const plugs = data?.govee?.plugs || [];
+    const chosen = settings[worker.name]?.plug;
+    if (chosen === 'none') return null;
+    if (chosen) return plugs.find((p) => p.id === chosen) || null;
+    const label = (settings[worker.name]?.label || '').toLowerCase();
+    return plugs.find((p) => {
+      const n = (p.name || '').toLowerCase();
+      return n.includes(worker.name.toLowerCase()) || (label && n.includes(label));
+    }) || null;
+  }
+  function rigWatts(worker) {
+    const p = plugFor(worker);
+    if (p && Number.isFinite(p.watts)) return { w: p.watts, src: 'plug', plug: p };
+    const est = Number(settings[worker.name]?.est);
+    if (est > 0) return { w: est, src: 'est', plug: p };
+    return { w: null, src: null, plug: p };
+  }
+  function totals() {
+    const pool = data.pool, cfg = data.config;
+    const plugW = (data.govee?.plugs || []).filter((p) => Number.isFinite(p.watts));
+    let w, src;
+    if (plugW.length) { w = plugW.reduce((a, p) => a + p.watts, 0); src = `${plugW.length} Govee plug${plugW.length > 1 ? 's' : ''}`; }
+    else {
+      const ests = (pool?.workers || []).map((x) => Number(settings[x.name]?.est)).filter((n) => n > 0);
+      if (ests.length) { w = ests.reduce((a, b) => a + b, 0); src = 'your estimates'; }
+      else { w = cfg.estWatts; src = 'estimate'; }
+    }
+    const kwh = (w * 24) / 1000;
+    const cost = kwh * cfg.rate;
+    const earnedPrl = pool?.paid24h ?? null;
+    const earnedUsd = earnedPrl != null && pool?.price ? earnedPrl * pool.price : null;
+    return { w, src, kwh, cost, earnedPrl, earnedUsd, net: earnedUsd != null ? earnedUsd - cost : null };
+  }
+
+  // ----- render -----
+  function render() {
+    if (!data) return;
+    const { pool, config: cfg } = data;
+    $('wallet').textContent = `${shortAddr(cfg.wallet)} · ${(cfg.rate * 100).toFixed(1)}¢/kWh`;
+    $('wallet').title = cfg.wallet;
+    $('rateNote').textContent = `$${cfg.rate.toFixed(3)}/kWh`;
+
+    // live pill
+    const fresh = data.lastPoll && Date.now() - data.lastPoll < data.config.pollMs * 2.2;
+    $('live').className = `pill ${!data.lastPoll ? '' : fresh ? 'good' : 'warn'}`;
+    const nextIn = data.nextPoll ? Math.max(0, Math.round((data.nextPoll - Date.now()) / 60000)) : null;
+    $('liveText').textContent = data.lastPoll ? `Updated ${ago(data.lastPoll)}${nextIn != null ? ` · next in ${nextIn || '<1'} min` : ''}` : 'First check running';
+    $('price').textContent = pool?.price ? `PRL $${pool.price.toFixed(3)}` : 'PRL —';
+
+    if (!pool) { $('foot').textContent = 'Waiting for HeroMiners…'; renderErrors(); return; }
+    const t = totals();
+    const h = hashParts(pool.hashrate1h || pool.hashrate);
+    const eff = t.w ? (pool.hashrate24h || pool.hashrate) / t.w : null;
+    const prlPerKwh = t.kwh && t.earnedPrl != null ? t.earnedPrl / t.kwh : null;
+    const netCls = t.net == null ? '' : t.net >= 0 ? 'pos' : 'neg';
+    const ws = pool.workers || [];
+    const down = ws.filter((w) => !w.lastShare || Date.now() - w.lastShare > 10 * 60000);
+    const up = ws.length - down.length;
+    $('tiles').innerHTML = `
+      <div class="tile hero"><span class="label">Net profit, last 24h</span>
+        <span class="v ${netCls}">${usd(t.net)}<small>/day</small></span>
+        <span class="s">${usd(t.earnedUsd)} earned − ${usd(t.cost)} power</span></div>
+      <div class="tile"><span class="label">Hashrate · 1h avg</span>
+        <span class="v">${h.n}<small>${h.u}</small></span>
+        <span class="s">24h avg ${fmtHash(pool.hashrate24h)}</span></div>
+      <div class="tile"><span class="label">Power draw</span>
+        <span class="v">${t.w != null ? Math.round(t.w).toLocaleString() : '—'}<small>W</small></span>
+        <span class="s">From ${esc(t.src)} · ${t.kwh.toFixed(1)} kWh/day</span></div>
+      <div class="tile"><span class="label">Paid, last 24h</span>
+        <span class="v">${prl(t.earnedPrl, 2)}<small>PRL</small></span>
+        <span class="s">${usd(t.earnedUsd)} at today's price</span></div>
+      <div class="tile"><span class="label">Power cost</span>
+        <span class="v">${usd(t.cost)}<small>/day</small></span>
+        <span class="s">${usd(t.cost * 30, 0)} per 30 days</span></div>
+      <div class="tile"><span class="label">Rigs mining</span>
+        <span class="v ${up < ws.length ? 'neg' : ''}">${up}<small>of ${ws.length}</small></span>
+        <span class="s">${up < ws.length ? 'Check ' + esc(down.map((w) => settings[w.name]?.label || w.name).join(', ')) : 'All sending shares'}</span></div>
+      <div class="tile"><span class="label">Efficiency</span>
+        <span class="v">${eff != null ? fmtHash(eff).split(' ')[0] : '—'}<small>${eff != null ? fmtHash(eff).split(' ')[1] + '/W' : ''}</small></span>
+        <span class="s">${prlPerKwh != null ? prl(prlPerKwh, 3) + ' PRL per kWh' : 'Needs watts'}</span></div>`;
+
+    renderChart();
+    renderRigs();
+    renderPlugs();
+    renderPay();
+    renderSettings();
+    $('foot').textContent = `Server checks HeroMiners and Govee every ${Math.round(cfg.pollMs / 60000)} minutes. Pool data ${ago(pool.fetchedAt)}.`;
+    renderErrors();
+  }
+
+  function renderErrors() {
+    const e = data?.errors || [];
+    $('errs').textContent = e.length ? `Last problem (${ago(e[0].t)}): ${e[0].msg}` : '';
+  }
+
+  function renderChart() {
+    const svg = $('chart');
+    // Draw at the element's real width so labels stay readable on a phone.
+    const W = Math.max(300, Math.round(svg.clientWidth || 640)), H = W < 500 ? 200 : 230, L = 50, R = 44, T = 12, B = 24;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    const pts = (data.pool.hashrateChart || []).filter((p) => Number.isFinite(p[1]));
+    const hist = (data.history || []).filter((p) => Number.isFinite(p.watts));
+    if (pts.length < 2) { svg.innerHTML = `<text x="${W / 2}" y="${H / 2}" text-anchor="middle">Not enough history yet</text>`; return; }
+    const t0 = Math.min(pts[0][0], hist[0]?.t ?? Infinity), t1 = Math.max(pts.at(-1)[0], hist.at(-1)?.t ?? 0);
+    const hMax = Math.max(...pts.map((p) => p[1])) * 1.1;
+    const x = (t) => L + ((t - t0) / (t1 - t0 || 1)) * (W - L - R);
+    const y = (v) => T + (1 - v / hMax) * (H - T - B);
+    let g = '';
+    for (let i = 0; i <= 4; i++) {
+      const v = (hMax / 4) * i, yy = y(v);
+      g += `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" stroke="var(--line)" stroke-width="1"/>`;
+      g += `<text x="${L - 6}" y="${yy + 4}" text-anchor="end">${fmtHash(v).replace(' ', '')}</text>`;
+    }
+    const span = t1 - t0, step = span > 12 * 3600e3 ? 6 * 3600e3 : 3 * 3600e3;
+    for (let tt = Math.ceil(t0 / step) * step; tt <= t1; tt += step) {
+      const d = new Date(tt);
+      g += `<text x="${x(tt)}" y="${H - 6}" text-anchor="middle">${d.toLocaleTimeString([], { hour: 'numeric' })}</text>`;
+    }
+    const line = pts.map((p, i) => `${i ? 'L' : 'M'}${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join('');
+    const area = `${line}L${x(pts.at(-1)[0]).toFixed(1)},${y(0)}L${x(pts[0][0]).toFixed(1)},${y(0)}Z`;
+    let wPath = '', wAxis = '';
+    if (hist.length >= 2) {
+      const wMax = Math.max(...hist.map((p) => p.watts)) * 1.15 || 1;
+      const yw = (v) => T + (1 - v / wMax) * (H - T - B);
+      wPath = `<path d="${hist.map((p, i) => `${i ? 'L' : 'M'}${x(p.t).toFixed(1)},${yw(p.watts).toFixed(1)}`).join('')}" fill="none" stroke="var(--warn)" stroke-width="1.6" stroke-dasharray="4 3"/>`;
+      wAxis = `<text x="${W - R + 6}" y="${yw(wMax / 1.15) + 4}">${Math.round(wMax / 1.15)}W</text><text x="${W - R + 6}" y="${yw(0) + 4}">0W</text>`;
+    }
+    const last = pts.at(-1);
+    svg.innerHTML = `<defs><linearGradient id="hg" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0" stop-color="var(--accent)" stop-opacity=".32"/><stop offset="1" stop-color="var(--accent-2)" stop-opacity=".03"/></linearGradient>
+        <linearGradient id="hl" x1="0" x2="1"><stop offset="0" stop-color="var(--accent)"/><stop offset="1" stop-color="var(--accent-2)"/></linearGradient></defs>
+      ${g}<path d="${area}" fill="url(#hg)"/><path d="${line}" fill="none" stroke="url(#hl)" stroke-width="2" stroke-linejoin="round"/>
+      ${wPath}${wAxis}
+      <circle cx="${x(last[0])}" cy="${y(last[1])}" r="4" fill="var(--accent-2)" stroke="var(--surface)" stroke-width="2"/>`;
+    $('legend').innerHTML = `<span><i style="background:var(--accent)"></i>Pool-side hashrate (all rigs)</span>${hist.length >= 2 ? '<span><i style="background:var(--warn)"></i>Govee watts</span>' : ''}`;
+  }
+
+  function spark(name) {
+    const pts = (data.history || []).map((p) => [p.t, p.workers?.[name]]).filter((p) => Number.isFinite(p[1]));
+    if (pts.length < 2) return '<div class="muted" style="font-size:.78rem">Trend fills in as the server keeps checking</div>';
+    const W = 300, H = 44, max = Math.max(...pts.map((p) => p[1])) * 1.1 || 1, t0 = pts[0][0], t1 = pts.at(-1)[0];
+    const x = (t) => ((t - t0) / (t1 - t0 || 1)) * (W - 6) + 3, y = (v) => 3 + (1 - v / max) * (H - 6);
+    const d = pts.map((p, i) => `${i ? 'L' : 'M'}${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join('');
+    const l = pts.at(-1);
+    return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+      <path d="${d}L${x(l[0])},${H}L${x(pts[0][0])},${H}Z" fill="var(--accent-soft)"/>
+      <path d="${d}" fill="none" stroke="var(--accent)" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg>`;
+  }
+
+  function renderRigs() {
+    const ws = data.pool.workers || [];
+    $('rigNote').textContent = `${ws.length} worker${ws.length === 1 ? '' : 's'} on the pool`;
+    if (!ws.length) { $('rigs').innerHTML = '<div class="rig bad"><b>No workers online.</b><span class="muted">HeroMiners has no recent shares from this wallet.</span></div>'; return; }
+    $('rigs').innerHTML = ws.map((w) => {
+      const age = w.lastShare ? (Date.now() - w.lastShare) / 60000 : Infinity;
+      const st = age < 10 ? ['', 'good', 'Mining'] : age < 30 ? ['warn', 'warn', 'Slow shares'] : ['bad', 'bad', 'Offline'];
+      const rw = rigWatts(w);
+      const eff = rw.w ? (w.hashrate1h || w.hashrate) / rw.w : null;
+      const stale = w.sharesGood ? ((w.sharesStale + w.sharesInvalid) / (w.sharesGood + w.sharesStale + w.sharesInvalid)) * 100 : 0;
+      const label = settings[w.name]?.label || w.name;
+      return `<article class="rig ${st[0]}">
+        <div class="rig-head"><div style="min-width:0"><h3>${esc(label)}</h3><div class="w">${[label !== w.name && w.name, rw.plug && rw.plug.name, w.agent].filter(Boolean).map(esc).join(' · ')}</div></div>
+          <span class="pill ${st[1]}"><span class="dot"></span>${st[2]}</span></div>
+        <div class="kv">
+          <div><span>Now</span><b>${fmtHash(w.hashrate)}</b></div>
+          <div><span>1h avg</span><b>${fmtHash(w.hashrate1h)}</b></div>
+          <div><span>24h avg</span><b>${fmtHash(w.hashrate24h)}</b></div>
+          <div><span>Watts</span><b>${rw.w != null ? watts(rw.w) : '—'}${rw.src === 'est' ? '<small class="muted"> est</small>' : ''}</b></div>
+          <div><span>Per watt</span><b>${eff != null ? fmtHash(eff) : '—'}</b></div>
+          <div><span>Last share</span><b>${ago(w.lastShare)}</b></div>
+        </div>
+        ${spark(w.name)}
+        <div class="muted" style="font-size:.8rem">${w.sharesGood.toLocaleString()} good shares · ${stale.toFixed(2)}% stale/invalid${w.region ? ' · ' + esc(w.region) : ''}</div>
+      </article>`;
+    }).join('');
+  }
+
+  function renderPlugs() {
+    const g = data.govee;
+    if (!g.enabled) { $('plugs').innerHTML = '<span class="muted">No Govee API key set on the server.</span>'; $('plugNote').innerHTML = ''; return; }
+    if (g.error && !g.plugs.length) { $('plugs').innerHTML = `<span class="muted">Govee didn't answer: ${esc(g.error)}</span>`; $('plugNote').innerHTML = ''; return; }
+    if (!g.plugs.length) { $('plugs').innerHTML = '<span class="muted">No plugs found on this Govee account yet.</span>'; $('plugNote').innerHTML = ''; return; }
+    $('plugs').innerHTML = g.plugs.map((p) => {
+      const stateTxt = p.error ? 'error' : p.online === false ? 'offline' : p.on === false ? 'off' : 'on';
+      const extra = [p.volts && `${p.volts.toFixed(0)} V`, p.amps && `${p.amps.toFixed(2)} A`].filter(Boolean).join(' · ');
+      return `<div class="row"><span class="l">${esc(p.name)} <span class="muted mono" style="font-size:.75rem">${esc(p.sku)} · ${stateTxt}${extra ? ' · ' + extra : ''}</span></span>
+        <span class="r">${Number.isFinite(p.watts) ? watts(p.watts) : '<span class="muted">no watts</span>'}</span></div>`;
+    }).join('');
+    const anyWatts = g.plugs.some((p) => Number.isFinite(p.watts));
+    $('plugNote').innerHTML = anyWatts ? '' : `<div class="note warn">Govee's API is returning on/off for these plugs but no wattage, so power and profit use your estimates below. <a href="/api/govee-debug" target="_blank" rel="noopener">See exactly what Govee sends</a>.</div>`;
+  }
+
+  function renderPay() {
+    const p = data.pool, min = p.minPayout || 0;
+    const pct = min ? Math.min(100, (p.balance / min) * 100) : 0;
+    $('pay').innerHTML = `
+      <div style="display:grid;gap:6px">
+        <div class="panel-head"><span class="label">Pending balance</span><span class="mono">${prl(p.balance, 4)} PRL${min ? ` / ${prl(min, 2)}` : ''}</span></div>
+        ${min ? `<div class="bar" role="progressbar" aria-valuenow="${pct.toFixed(0)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct.toFixed(1)}%"></i></div>` : ''}
+      </div>
+      <div class="rows" style="margin-top:8px">
+        <div class="row"><span class="l">Paid last 7 days</span><span class="r">${prl(p.paid7d, 2)} PRL · ${usd(p.paid7d * (p.price || 0))}</span></div>
+        <div class="row"><span class="l">Paid all time</span><span class="r">${prl(p.paid, 2)} PRL · ${usd(p.paid * (p.price || 0))}</span></div>
+      </div>
+      <div class="label" style="margin-top:10px">Recent payouts</div>
+      <div class="rows">${(p.payments || []).slice(0, 6).map((x) => `<div class="row"><span class="l muted">${new Date(x.t).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span><span class="r">${prl(x.amount, 4)} PRL</span></div>`).join('') || '<span class="muted">None yet</span>'}</div>`;
+  }
+
+  let settingsDrawn = '';
+  function renderSettings() {
+    const ws = data.pool?.workers || [], plugs = data.govee?.plugs || [];
+    const sig = JSON.stringify([ws.map((w) => w.name), plugs.map((p) => p.id + p.name)]);
+    if (sig === settingsDrawn) return;   // don't redraw while someone is typing
+    settingsDrawn = sig;
+    $('setList').innerHTML = ws.map((w, i) => {
+      const s = settings[w.name] || {};
+      const opts = ['<option value="">Auto-match by name</option>', `<option value="none"${s.plug === 'none' ? ' selected' : ''}>No plug</option>`]
+        .concat(plugs.map((p) => `<option value="${esc(p.id)}"${s.plug === p.id ? ' selected' : ''}>${esc(p.name)}</option>`)).join('');
+      return `<div class="set"><span class="mono" style="font-size:.8rem">${esc(w.name)}</span><div class="grid">
+        <label for="lab-${i}">Rig name<input id="lab-${i}" data-w="${esc(w.name)}" data-k="label" value="${esc(s.label || '')}" placeholder="e.g. 4090 rig"></label>
+        <label for="plug-${i}">Govee plug<select id="plug-${i}" data-w="${esc(w.name)}" data-k="plug">${opts}</select></label>
+        <label for="est-${i}">Estimated watts<input id="est-${i}" data-w="${esc(w.name)}" data-k="est" type="number" inputmode="numeric" min="0" step="10" value="${esc(s.est || '')}" placeholder="e.g. 650"></label>
+      </div></div>`;
+    }).join('') || '<span class="muted">Rigs show up here once the pool reports them.</span>';
+  }
+  $('setList').addEventListener('input', (e) => {
+    const el = e.target.closest('[data-w]'); if (!el) return;
+    rigSet(el.dataset.w)[el.dataset.k] = el.value.trim();
+    save(); render();
+  });
+
+  // ----- fetch loop -----
+  async function load(manual) {
+    try {
+      const r = await fetch(manual ? '/api/refresh' : '/api/data', { method: manual ? 'POST' : 'GET', cache: 'no-store' });
+      if (!r.ok) throw new Error(r.status);
+      data = await r.json();
+      render();
+    } catch (e) {
+      $('live').className = 'pill bad'; $('liveText').textContent = 'Server unreachable, retrying';
+    }
+  }
+  $('refresh').addEventListener('click', async (e) => {
+    e.currentTarget.disabled = true; e.currentTarget.textContent = 'Refreshing…';
+    await load(true);
+    const b = $('refresh'); b.disabled = false; b.textContent = 'Refresh now';
+  });
+  load(false);
+  setInterval(() => load(false), 60_000);           // reads the server's cache; the server polls every 5 min
+  setInterval(() => data && render(), 30_000);      // keep "x min ago" honest between loads
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) load(false); });
+})();
+</script>
+</body>
+</html>
