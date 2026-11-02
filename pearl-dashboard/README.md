@@ -1,6 +1,12 @@
 # Pearl Rigs dashboard
 
-A small, dependency-free Node server that checks HeroMiners and Govee every 5 minutes and serves a phone-friendly dashboard.
+A small, dependency-free Node server that checks HeroMiners and Govee every 5 minutes and serves a holographic, phone-friendly dashboard: fleet and per-rig hashrate in TH/s, earnings, power cost, net profit, rig cost and payback.
+
+**Hashrate units.** HeroMiners reports Pearl hashrate in difficulty-1 shares per second. Each one is 2^32 hashes, so the server multiplies every pool hashrate by 2^32 (the pool's own `realHashrate / hashrate` ratio) to show real TH/s.
+
+**Earnings.** Each rig's expected PRL a day = its 6-hour hashrate x block reward x 86,400 / (network difficulty x 2^32). The page also shows what the pool actually paid over 7 days as a check.
+
+**Rigs.** `rigs.json` holds each rig's name, pool worker, watts at the wall and what it cost. The page's Rig setup panel can override these per device.
 
 - `/` — the dashboard
 - `/api/data` — the latest pool, plug and history data as JSON
@@ -13,7 +19,8 @@ A small, dependency-free Node server that checks HeroMiners and Govee every 5 mi
 | --- | --- |
 | `PRL_WALLET` | Pearl payout address mined to on HeroMiners |
 | `GOVEE_API_KEY` | Govee developer API key |
-| `POWER_RATE` | Electricity price in $/kWh (default 0.09) |
+| `POWER_RATE` | Electricity price in $/kWh (default: `rate` in rigs.json, else 0.09) |
+| `RIGS_JSON` | Optional: replaces rigs.json with this JSON |
 | `EST_TOTAL_WATTS` | Fallback total watts when no plug reports power (default 1500) |
 | `POLL_MINUTES` | How often the server checks (default 5) |
 

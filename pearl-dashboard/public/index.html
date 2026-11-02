@@ -4,304 +4,627 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Pearl Rigs</title>
-<meta name="theme-color" content="#10131b" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#f3f4f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#040b17">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Unbounded:wght@300;500;700&display=swap">
 <style>
-/* Layout: status header, summary tiles, 24h chart, one card per rig, plugs, payouts, settings. Phone-first single column, two columns on desktop. */
+/* Nacre hologram: deep-sea abyss, mother-of-pearl spectrum, a projected pearl with the rigs in orbit. */
 :root {
-  --bg: #f3f4f8; --surface: #ffffff; --sunk: #eceef4; --ink: #191c27; --muted: #5f667a; --line: #dde0e9;
-  --accent: #3d58c4; --accent-2: #a46cc9; --accent-soft: rgba(61, 88, 196, .12);
-  --good: #17895a; --warn: #b77b06; --bad: #c63d33;
-  --f-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
-  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
-  --r: 14px;
-  color-scheme: light;
-}
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #10131b; --surface: #181c27; --sunk: #141824; --ink: #e7e9f1; --muted: #9ba1b5; --line: #272c3b;
-  --accent: #8ea0ff; --accent-2: #d2a2ef; --accent-soft: rgba(142, 160, 255, .14);
-  --good: #4fcf91; --warn: #f0b84a; --bad: #ff7b6e; color-scheme: dark;
-} }
-:root[data-theme="dark"] {
-  --bg: #10131b; --surface: #181c27; --sunk: #141824; --ink: #e7e9f1; --muted: #9ba1b5; --line: #272c3b;
-  --accent: #8ea0ff; --accent-2: #d2a2ef; --accent-soft: rgba(142, 160, 255, .14);
-  --good: #4fcf91; --warn: #f0b84a; --bad: #ff7b6e; color-scheme: dark;
+  color-scheme: dark;
+  --abyss: #040b17;
+  --ink: #eaf3ff;
+  --muted: #93a9c6;
+  --faint: #60789a;
+  --edge: rgba(176, 214, 255, .14);
+  --pane: rgba(150, 196, 255, .045);
+  --pink: #ffb4dc; --lilac: #c2b2ff; --sky: #9ad6ff; --aqua: #85f1df; --gold: #ffe2a1;
+  --good: #72f0cc; --warn: #ffd37c; --bad: #ff8399;
+  --nacre: linear-gradient(105deg, var(--pink), var(--lilac) 24%, var(--sky) 48%, var(--aqua) 72%, var(--gold));
+  --f-display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --f-body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+html { background: var(--abyss); -webkit-text-size-adjust: 100%; }
 body {
-  margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--f-body);
-  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-block: calc(env(safe-area-inset-top, 0px) + 18px) calc(env(safe-area-inset-bottom, 0px) + 40px);
+  margin: 0; min-height: 100vh; color: var(--ink);
+  font: 400 15px/1.5 var(--f-body); font-variant-numeric: tabular-nums;
+  background:
+    radial-gradient(130% 60% at 50% -12%, #0f2c4b 0%, rgba(15, 44, 75, 0) 62%),
+    radial-gradient(70% 40% at 92% 100%, rgba(194, 178, 255, .09), transparent 70%),
+    radial-gradient(60% 40% at 0% 70%, rgba(133, 241, 223, .05), transparent 70%),
+    var(--abyss);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: calc(env(safe-area-inset-top, 0px) + 14px) calc(env(safe-area-inset-bottom, 0px) + 44px);
+  overflow-x: hidden;
 }
-.wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 20px; }
-h1, h2 { font-family: var(--f-display); text-wrap: balance; margin: 0; letter-spacing: -.01em; }
-h1 { font-size: 1.9rem; font-weight: 700; line-height: 1.1; }
-h2 { font-size: 1.15rem; font-weight: 700; }
-.num, .mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
-.muted { color: var(--muted); }
-.label { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+/* fine scanlines over everything, like a projection */
+body::after {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 40;
+  background: repeating-linear-gradient(0deg, rgba(234, 243, 255, .028) 0 1px, transparent 1px 3px);
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 26px; position: relative; z-index: 1; }
+h1, h2, h3 { margin: 0; font-family: var(--f-display); letter-spacing: -.01em; text-wrap: balance; }
+h1 { font-weight: 500; font-size: 1.15rem; }
+h2 { font-weight: 500; font-size: 1rem; }
+h3 { font-weight: 500; font-size: 1.02rem; line-height: 1.25; }
+p { margin: 0; }
+a { color: var(--sky); }
 button { font: inherit; color: inherit; }
-a { color: var(--accent); }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--sky); outline-offset: 3px; border-radius: 6px; }
+.muted { color: var(--muted); }
+.faint { color: var(--faint); }
+.pos { color: var(--good); } .neg { color: var(--bad); }
+.est { font: 500 .66rem/1 var(--f-body); color: var(--gold); border: 1px solid rgba(255, 226, 161, .35); border-radius: 999px; padding: 2px 6px; margin-left: 6px; vertical-align: 2px; white-space: nowrap; }
 
-/* header */
-header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
-.brand { display: grid; gap: 4px; min-width: 0; }
-.brand .sub { font-size: .85rem; color: var(--muted); overflow-wrap: anywhere; }
-.status { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: .8rem; font-weight: 600; background: var(--sunk); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
-.pill .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-.pill.good { color: var(--good); } .pill.warn { color: var(--warn); } .pill.bad { color: var(--bad); }
-.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 5px 12px; font-size: .82rem; font-weight: 600; cursor: pointer; }
-.btn:hover { border-color: var(--accent); color: var(--accent); }
+/* ---------- top bar ---------- */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand svg { flex: none; }
+.brand .sub { font-size: .8rem; color: var(--faint); overflow-wrap: anywhere; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.chip { display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px; font-size: .8rem; font-weight: 500; color: var(--muted); border: 1px solid var(--edge); background: var(--pane); white-space: nowrap; }
+.chip i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.chip.good { color: var(--good); } .chip.warn { color: var(--warn); } .chip.bad { color: var(--bad); }
+.chip.price b { color: var(--ink); font-weight: 600; }
+.btn { cursor: pointer; border: 1px solid var(--edge); background: var(--pane); border-radius: 999px; padding: 5px 13px; font-size: .8rem; font-weight: 600; color: var(--ink); }
+.btn:hover { border-color: rgba(154, 214, 255, .5); }
 .btn:disabled { opacity: .5; cursor: default; }
 
-/* summary tiles */
-.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-@media (min-width: 760px) { .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; display: grid; gap: 4px; align-content: start; min-width: 0; }
-.tile .v { font-family: var(--f-display); font-weight: 700; font-size: 1.6rem; line-height: 1.1; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.tile .v small { font-family: var(--f-body); font-size: .8rem; font-weight: 500; color: var(--muted); margin-left: 3px; }
-.tile .s { font-size: .8rem; color: var(--muted); }
-.tile.hero { grid-column: 1 / -1; background: linear-gradient(135deg, var(--accent-soft), transparent 70%), var(--surface); }
-.tile.hero .v { font-size: 2.3rem; }
-.pos { color: var(--good); } .neg { color: var(--bad); }
+/* ---------- hero: the hologram ---------- */
+.hero { display: grid; gap: 6px; align-items: center; }
+@media (min-width: 900px) { .hero { grid-template-columns: 1.15fr .85fr; gap: 28px; } }
+.stage { position: relative; width: 100%; aspect-ratio: 10 / 9; max-height: 480px; margin-inline: auto; }
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: default; }
+.stage canvas.can-tap { cursor: pointer; }
+.readout { display: grid; gap: 18px; justify-items: center; text-align: center; }
+@media (min-width: 900px) { .readout { justify-items: start; text-align: left; } }
+.fleet { display: grid; gap: 4px; }
+.fleet .lab { font-size: .85rem; color: var(--muted); }
+.big {
+  font: 300 clamp(2.9rem, 13vw, 4.6rem)/1 var(--f-display); letter-spacing: -.035em;
+  background: var(--nacre); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.big small { font-size: .3em; letter-spacing: 0; font-weight: 500; margin-left: .35em; -webkit-text-fill-color: var(--muted); }
+.fleet .cap { font-size: .85rem; color: var(--muted); }
+.netline { display: grid; gap: 2px; }
+.netline .v { font: 500 1.75rem/1.1 var(--f-display); letter-spacing: -.02em; }
+.netline .v small { font: 500 .8rem var(--f-body); color: var(--muted); margin-left: 4px; }
+.netline .s { font-size: .85rem; color: var(--muted); }
+.legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: center; font-size: .82rem; }
+@media (min-width: 900px) { .legend { justify-content: flex-start; } }
+.legend li { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); }
+.legend li b { color: var(--ink); font-weight: 500; }
+.legend .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--c); box-shadow: 0 0 10px var(--c); }
+.legend li.off .dot { background: var(--faint); box-shadow: none; }
 
-/* panels */
-.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 12px; min-width: 0; align-content: start; }
-.panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+/* ---------- glass panes ---------- */
+.glass { position: relative; border-radius: 20px; background: linear-gradient(180deg, rgba(160, 210, 255, .065), rgba(160, 210, 255, .02)); isolation: isolate; }
+.glass::before { /* iridescent hairline */
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none; z-index: -1;
+  background: conic-gradient(from 210deg at 30% 0%, rgba(255, 180, 220, .5), rgba(194, 178, 255, .35), rgba(154, 214, 255, .22), rgba(133, 241, 223, .4), rgba(255, 226, 161, .3), rgba(255, 180, 220, .5));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.glass::after { /* nacre sheen that follows your finger */
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: -1; opacity: 0; transition: opacity .35s;
+  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 0%), rgba(255, 180, 220, .10), rgba(154, 214, 255, .07) 40%, transparent 70%);
+}
+.glass.lit::after { opacity: 1; }
+
+/* ---------- ledger strip ---------- */
+.ledger { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 760px) { .ledger { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.cell { padding: 16px 16px 15px; display: grid; gap: 3px; align-content: start; min-width: 0; }
+.cell + .cell { border-left: 1px solid var(--edge); }
+@media (max-width: 759px) {
+  .cell:nth-child(3) { border-left: 0; }
+  .cell:nth-child(n+3) { border-top: 1px solid var(--edge); }
+}
+.cell .lab { font-size: .8rem; color: var(--muted); }
+.cell .v { font: 500 1.35rem/1.15 var(--f-display); letter-spacing: -.02em; overflow-wrap: anywhere; }
+.cell .v small { font: 500 .75rem var(--f-body); color: var(--muted); margin-left: 3px; letter-spacing: 0; }
+.cell .s { font-size: .8rem; color: var(--muted); }
+
+/* ---------- rigs ---------- */
+.sect-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.sect-head .muted { font-size: .85rem; }
+.rigs { display: grid; gap: 14px; }
+@media (min-width: 700px) { .rigs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1040px) { .rigs { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.rig { padding: 18px; display: grid; gap: 14px; align-content: start; min-width: 0; scroll-margin-top: 20px; }
+.rig.flash { animation: flash 1.2s ease-out; }
+@keyframes flash { 0% { box-shadow: 0 0 0 2px var(--c), 0 0 40px var(--c); } 100% { box-shadow: 0 0 0 0 transparent; } }
+.rig-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.rig-id { display: flex; gap: 10px; align-items: flex-start; min-width: 0; }
+.rig-id svg { flex: none; margin-top: 1px; }
+.gpus { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
+.gpus span { font-size: .72rem; color: var(--muted); border: 1px solid var(--edge); border-radius: 6px; padding: 1px 6px; }
+.status { display: inline-flex; gap: 6px; align-items: center; font-size: .78rem; font-weight: 600; white-space: nowrap; color: var(--muted); }
+.status i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.status.good { color: var(--good); } .status.warn { color: var(--warn); } .status.bad, .status.missing { color: var(--bad); }
+@media (prefers-reduced-motion: no-preference) { .status.good i { animation: pulse 2.2s ease-out infinite; } }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(114, 240, 204, .55); } 70%, 100% { box-shadow: 0 0 0 9px rgba(114, 240, 204, 0); } }
+.rate { display: grid; gap: 4px; }
+.rate b { font: 300 2.3rem/1 var(--f-display); letter-spacing: -.03em; color: var(--c); text-shadow: 0 0 24px color-mix(in srgb, var(--c) 45%, transparent); }
+.rate b small { font: 500 .8rem var(--f-body); color: var(--muted); margin-left: 6px; text-shadow: none; letter-spacing: 0; }
+.rate .s { font-size: .8rem; color: var(--muted); }
+.share { display: grid; gap: 5px; }
+.track { height: 6px; border-radius: 999px; background: rgba(176, 214, 255, .08); overflow: hidden; }
+.track i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, color-mix(in srgb, var(--c) 35%, transparent), var(--c)); box-shadow: 0 0 12px var(--c); transition: width .9s cubic-bezier(.3, .7, .2, 1); }
+.share span { font-size: .75rem; color: var(--faint); }
+.money { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border: 1px solid var(--edge); border-radius: 12px; overflow: hidden; }
+.money div { padding: 9px 10px; display: grid; gap: 1px; min-width: 0; }
+.money div + div { border-left: 1px solid var(--edge); }
+.money span { font-size: .72rem; color: var(--muted); }
+.money b { font: 500 1.02rem/1.2 var(--f-display); letter-spacing: -.02em; overflow-wrap: anywhere; }
+.money small { font-size: .72rem; color: var(--faint); overflow-wrap: anywhere; }
+.facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; margin: 0; }
+.facts div { display: grid; gap: 1px; min-width: 0; }
+.facts dt { font-size: .74rem; color: var(--muted); }
+.facts dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.spark { width: 100%; height: 40px; display: block; }
+.rig-foot { font-size: .75rem; color: var(--faint); overflow-wrap: anywhere; }
+.rig.unassigned { --c: var(--sky); }
+
+/* ---------- chart, payouts, plugs ---------- */
+.pane { padding: 18px; display: grid; gap: 14px; min-width: 0; align-content: start; }
 .chart { width: 100%; height: auto; display: block; overflow: visible; }
-.chart text { fill: var(--muted); font: 11px var(--f-mono); }
-.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .78rem; color: var(--muted); }
-.legend i { display: inline-block; width: 10px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
-
-.two { display: grid; gap: 20px; }
-@media (min-width: 900px) { .two { grid-template-columns: 1fr 1fr; } }
-
-/* rigs */
-.rigs { display: grid; gap: 12px; }
-@media (min-width: 760px) { .rigs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.rig { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 12px; min-width: 0; position: relative; overflow: hidden; }
-.rig::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--good); }
-.rig.warn::before { background: var(--warn); } .rig.bad::before { background: var(--bad); }
-.rig-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
-.rig-head h3 { margin: 0; font: 700 1.1rem/1.2 var(--f-display); overflow-wrap: anywhere; }
-.rig-head .w { font-size: .78rem; color: var(--muted); font-family: var(--f-mono); overflow-wrap: anywhere; }
-.kv { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.kv div { display: grid; gap: 2px; min-width: 0; }
-.kv b { font: 500 1.02rem var(--f-mono); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.kv span { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
-.spark { width: 100%; height: 44px; display: block; }
-
-/* lists */
+.chart text { fill: var(--faint); font: 11px var(--f-body); }
+@media (prefers-reduced-motion: no-preference) { .chart .draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.6s cubic-bezier(.3, .7, .2, 1) forwards; } }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.two { display: grid; gap: 14px; }
+@media (min-width: 860px) { .two { grid-template-columns: 1fr 1fr; } }
 .rows { display: grid; }
-.row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); font-size: .9rem; align-items: baseline; }
+.row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--edge); font-size: .9rem; align-items: baseline; }
 .row:first-child { border-top: 0; }
-.row .r { font-family: var(--f-mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.row .r { text-align: right; white-space: nowrap; }
 .row .l { min-width: 0; overflow-wrap: anywhere; }
-.bar { height: 8px; border-radius: 999px; background: var(--sunk); overflow: hidden; border: 1px solid var(--line); }
-.bar > i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius: 999px; }
-.note { font-size: .85rem; color: var(--muted); background: var(--sunk); border: 1px dashed var(--line); border-radius: 10px; padding: 10px 12px; }
-.note.warn { color: var(--ink); border-color: var(--warn); }
+.payout-bar { height: 10px; border-radius: 999px; background: rgba(176, 214, 255, .08); overflow: hidden; }
+.payout-bar i { display: block; height: 100%; background: var(--nacre); border-radius: 999px; box-shadow: 0 0 14px rgba(154, 214, 255, .5); transition: width .9s cubic-bezier(.3, .7, .2, 1); }
+.note { font-size: .82rem; color: var(--muted); border: 1px dashed var(--edge); border-radius: 12px; padding: 10px 12px; }
 
-/* settings */
-details.panel > summary { cursor: pointer; list-style: none; font: 700 1.05rem var(--f-display); display: flex; justify-content: space-between; gap: 12px; }
-details.panel > summary::-webkit-details-marker { display: none; }
-details.panel > summary::after { content: " +"; color: var(--muted); }
-details[open].panel > summary::after { content: " –"; }
-.set { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--sunk); }
-.set .grid { display: grid; gap: 10px; grid-template-columns: 1fr; }
-@media (min-width: 640px) { .set .grid { grid-template-columns: 1.2fr 1.2fr .8fr; } }
-.set label { display: grid; gap: 4px; font-size: .78rem; color: var(--muted); font-weight: 600; }
-input, select { font: 15px var(--f-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0; }
-footer { font-size: .8rem; color: var(--muted); display: grid; gap: 4px; }
-.skeleton { color: var(--muted); }
-@media (prefers-reduced-motion: no-preference) { .rig, .tile { transition: border-color .2s; } }
+/* ---------- setup ---------- */
+details.setup { padding: 0; }
+details.setup > summary { cursor: pointer; list-style: none; padding: 16px 18px; display: flex; justify-content: space-between; align-items: center; gap: 12px; font: 500 1rem var(--f-display); }
+details.setup > summary::-webkit-details-marker { display: none; }
+details.setup > summary::after { content: "+"; color: var(--muted); font: 300 1.4rem/1 var(--f-display); }
+details[open].setup > summary::after { content: "−"; }
+.setup-body { padding: 0 18px 18px; display: grid; gap: 14px; }
+.setup-body > p { font-size: .88rem; color: var(--muted); max-width: 62ch; }
+.fs { border: 1px solid var(--edge); border-radius: 14px; padding: 12px; display: grid; gap: 10px; margin: 0; min-width: 0; }
+.fs legend { padding: 0 6px; font-weight: 600; font-size: .9rem; }
+.fields { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
+@media (min-width: 760px) { .fields { grid-template-columns: 1.3fr 1.3fr 1fr 1fr; } }
+.fields label { display: grid; gap: 4px; font-size: .76rem; color: var(--muted); font-weight: 500; min-width: 0; }
+input, select { font: 16px var(--f-body); color: var(--ink); background: rgba(4, 11, 23, .6); border: 1px solid var(--edge); border-radius: 10px; padding: 8px 10px; width: 100%; min-width: 0; }
+input:focus, select:focus { border-color: rgba(154, 214, 255, .6); outline: none; box-shadow: 0 0 0 3px rgba(154, 214, 255, .15); }
+.setup-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
+.setup-actions label { display: grid; gap: 4px; font-size: .76rem; color: var(--muted); font-weight: 500; width: 160px; }
+
+footer { font-size: .8rem; color: var(--faint); display: grid; gap: 4px; }
+
+/* ---------- the one orchestrated moment: the projector powers on ---------- */
+.scanbar { position: fixed; left: 0; right: 0; top: 0; height: 2px; z-index: 60; pointer-events: none; background: var(--nacre); box-shadow: 0 0 22px 5px rgba(154, 214, 255, .45); opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .boot .stage { animation: flickerIn 1.1s linear both; }
+  .boot .after-hero { animation: fadeIn .7s ease-out .65s both; }
+  .boot .scanbar { animation: sweep 1.5s cubic-bezier(.35, .6, .25, 1) .25s both; }
+  .big { animation: sheen 14s linear infinite; }
+}
+@keyframes flickerIn { 0% { opacity: 0; } 7% { opacity: .55; } 11% { opacity: .08; } 19% { opacity: .85; } 24% { opacity: .3; } 38%, 100% { opacity: 1; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sweep { 0% { transform: translateY(0); opacity: 1; } 85% { opacity: 1; } 100% { transform: translateY(100vh); opacity: 0; } }
+@keyframes sheen { to { background-position: -220% 0; } }
 </style>
 </head>
-<body>
+<body class="boot">
+<div class="scanbar" aria-hidden="true"></div>
 <div class="wrap">
-  <header>
+  <header class="top">
     <div class="brand">
-      <span class="label">Pearl · HeroMiners</span>
-      <h1>Pearl Rigs</h1>
-      <span class="sub mono" id="wallet">Loading wallet…</span>
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true">
+        <defs><radialGradient id="pg" cx=".38" cy=".35" r=".7"><stop offset="0" stop-color="#fff"/><stop offset=".45" stop-color="#d9ccff"/><stop offset="1" stop-color="#5f7fc4"/></radialGradient></defs>
+        <ellipse cx="15" cy="15" rx="14" ry="5" fill="none" stroke="#85f1df" stroke-opacity=".6" transform="rotate(-12 15 15)"/>
+        <circle cx="15" cy="15" r="7.5" fill="url(#pg)"/>
+      </svg>
+      <div style="min-width:0">
+        <h1>Pearl rigs</h1>
+        <div class="sub" id="wallet">Connecting to HeroMiners</div>
+      </div>
     </div>
-    <div class="status">
-      <span class="pill" id="live"><span class="dot"></span><span id="liveText">Connecting</span></span>
-      <span class="pill" id="price">PRL —</span>
-      <button class="btn" id="refresh" type="button">Refresh now</button>
+    <div class="chips">
+      <span class="chip" id="live"><i></i><span id="liveText">Connecting</span></span>
+      <span class="chip price" id="price">PRL <b>—</b></span>
+      <button class="btn" id="refresh" type="button">Check pool now</button>
     </div>
   </header>
 
-  <section class="tiles" id="tiles" aria-label="Summary">
-    <div class="tile hero"><span class="label">Net profit, last 24h</span><span class="v skeleton">—</span><span class="s">Waiting for the first pool check</span></div>
-  </section>
-
-  <section class="panel" aria-labelledby="h-chart">
-    <div class="panel-head">
-      <h2 id="h-chart">Hashrate, last 24 hours</h2>
-      <div class="legend" id="legend"></div>
+  <section class="hero" aria-label="Fleet overview">
+    <div class="stage"><canvas id="holo" role="img" aria-label="Hologram of your rigs orbiting a pearl. Faster orbit means more hashrate."></canvas></div>
+    <div class="readout">
+      <div class="fleet">
+        <span class="lab">Fleet hashrate, 6-hour pace</span>
+        <span class="big"><span id="fleetTh">0.0</span><small id="fleetUnit">TH/s</small></span>
+        <span class="cap" id="fleetCap">Waiting for the first pool check</span>
+      </div>
+      <ul class="legend" id="legend"></ul>
+      <div class="netline">
+        <span class="v" id="netWrap"><span id="netDay">$0.00</span><small>net a day</small></span>
+        <span class="s" id="netCap">Earnings minus power, at today's PRL price</span>
+      </div>
     </div>
-    <svg class="chart" id="chart" viewBox="0 0 640 220" role="img" aria-label="Hashrate over the last 24 hours"></svg>
   </section>
 
-  <section aria-labelledby="h-rigs" style="display:grid;gap:12px">
-    <div class="panel-head"><h2 id="h-rigs">Rigs</h2><span class="muted" style="font-size:.85rem" id="rigNote"></span></div>
-    <div class="rigs" id="rigs"><div class="rig"><span class="muted">Rigs appear after the first pool check.</span></div></div>
-  </section>
+  <div class="after-hero" style="display:grid;gap:26px">
+    <section class="glass ledger" id="ledger" aria-label="Money"></section>
 
-  <div class="two">
-    <section class="panel" aria-labelledby="h-power">
-      <div class="panel-head"><h2 id="h-power">Govee plugs</h2><span class="muted mono" style="font-size:.8rem" id="rateNote"></span></div>
-      <div id="plugs" class="rows"><span class="muted">Checking plugs…</span></div>
-      <div id="plugNote"></div>
+    <section style="display:grid;gap:12px" aria-labelledby="h-rigs">
+      <div class="sect-head"><h2 id="h-rigs">Rigs</h2><span class="muted" id="rigNote"></span></div>
+      <div class="rigs" id="rigs"><div class="glass rig"><span class="muted">Rigs appear after the first pool check.</span></div></div>
     </section>
-    <section class="panel" aria-labelledby="h-pay">
-      <div class="panel-head"><h2 id="h-pay">Balance & payouts</h2></div>
-      <div id="pay"><span class="muted">Loading…</span></div>
+
+    <section class="glass pane" aria-labelledby="h-chart">
+      <div class="sect-head"><h2 id="h-chart">Fleet hashrate, last 24 hours</h2><span class="muted" id="chartNote"></span></div>
+      <svg class="chart" id="chart" viewBox="0 0 640 220" role="img" aria-label="Fleet hashrate over the last 24 hours"></svg>
     </section>
+
+    <div class="two">
+      <section class="glass pane" aria-labelledby="h-pay">
+        <h2 id="h-pay">Balance and payouts</h2>
+        <div id="pay"><span class="muted">Loading</span></div>
+      </section>
+      <section class="glass pane" aria-labelledby="h-plugs">
+        <h2 id="h-plugs">Govee plugs</h2>
+        <div id="plugs" class="rows"><span class="muted">Checking plugs</span></div>
+      </section>
+    </div>
+
+    <details class="glass setup" id="setup">
+      <summary>Rig setup: names, watts and what you paid</summary>
+      <div class="setup-body">
+        <p>Changes save on this device and update every number above. Watts means the draw at the wall; the Govee app shows it for each plug. Anything marked <span class="est" style="margin:0">est</span> is a placeholder until you set it.</p>
+        <div id="setList" style="display:grid;gap:12px"></div>
+        <div class="setup-actions">
+          <label for="rateIn">Electricity, $ per kWh<input id="rateIn" type="number" inputmode="decimal" min="0" step="0.005"></label>
+          <button class="btn" id="resetBtn" type="button">Reset to defaults</button>
+        </div>
+      </div>
+    </details>
+
+    <footer>
+      <span id="foot">The server checks the pool every 5 minutes.</span>
+      <span id="errs"></span>
+    </footer>
   </div>
-
-  <details class="panel" id="settings">
-    <summary>Rig names, plugs and power estimates</summary>
-    <p class="muted" style="margin:0;font-size:.88rem">Saved in this browser only. Pick which Govee plug each rig is on so its watts and efficiency show on the rig card. The estimate is used when a plug doesn't report watts.</p>
-    <div id="setList" style="display:grid;gap:10px"></div>
-  </details>
-
-  <footer>
-    <span id="foot">Updates every 5 minutes.</span>
-    <span id="errs"></span>
-  </footer>
 </div>
 
 <script>
 (() => {
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COLORS = ['#85f1df', '#ffb4dc', '#ffe2a1', '#c2b2ff', '#9ad6ff'];
   let data = null;
 
-  // ----- per-browser settings -----
-  const KEY = 'pearl-rigs-settings-v1';
-  let settings = {};
-  try { settings = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { settings = {}; }
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(settings)); } catch {} };
-  const rigSet = (name) => (settings[name] ||= {});
+  // ---------- per-device settings ----------
+  const KEY = 'pearl-holo-v2';
+  let S = {};
+  try { S = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { S = {}; }
+  S.rigs = S.rigs || {};
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
+  const num = (v) => { if (v === '' || v == null) return null; const n = Number(v); return Number.isFinite(n) && n >= 0 ? n : null; };
 
-  // ----- formatting -----
-  function fmtHash(h) {
-    if (h == null || !Number.isFinite(h)) return '—';
-    const u = ['H/s', 'KH/s', 'MH/s', 'GH/s', 'TH/s', 'PH/s', 'EH/s'];
-    let i = 0; while (Math.abs(h) >= 1000 && i < u.length - 1) { h /= 1000; i++; }
-    return `${h.toFixed(h >= 100 ? 0 : 1)} ${u[i]}`;
+  // ---------- formatting ----------
+  const UNITS = ['H/s', 'KH/s', 'MH/s', 'GH/s', 'TH/s', 'PH/s', 'EH/s'];
+  function hashParts(h, digits) {
+    if (h == null || !Number.isFinite(h)) return { n: '—', u: '' };
+    let i = 0; while (Math.abs(h) >= 1000 && i < UNITS.length - 1) { h /= 1000; i++; }
+    const d = digits ?? (h >= 100 ? 0 : 1);
+    return { n: h.toFixed(d), u: UNITS[i] };
   }
-  const hashParts = (h) => { const [n, u] = fmtHash(h).split(' '); return { n, u }; };
-  const usd = (v, d = 2) => (v == null || !Number.isFinite(v) ? '—' : `${v < 0 ? '−' : ''}$${Math.abs(v).toFixed(d)}`);
-  const prl = (v, d = 3) => (v == null || !Number.isFinite(v) ? '—' : v.toFixed(d));
-  const watts = (w) => (w == null || !Number.isFinite(w) ? '—' : `${Math.round(w).toLocaleString()} W`);
+  const hashStr = (h, d) => { const p = hashParts(h, d); return p.u ? `${p.n} ${p.u}` : p.n; };
+  const usd = (v, d = 2) => (v == null || !Number.isFinite(v) ? '—' : `${v < 0 ? '−' : ''}$${Math.abs(v).toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d })}`);
+  const prl = (v, d = 2) => (v == null || !Number.isFinite(v) ? '—' : v.toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d }));
+  const wattsStr = (w) => (w == null || !Number.isFinite(w) ? '—' : `${Math.round(w).toLocaleString()} W`);
   function ago(t) {
     if (!t) return 'never';
     const s = Math.max(0, Math.round((Date.now() - t) / 1000));
     if (s < 60) return `${s}s ago`;
     const m = Math.round(s / 60); if (m < 60) return `${m} min ago`;
-    const h = Math.floor(m / 60); return `${h}h ${m % 60}m ago`;
+    const h = Math.floor(m / 60); if (h < 48) return `${h}h ${m % 60}m ago`;
+    return `${Math.round(h / 24)} days ago`;
   }
-  const shortAddr = (a) => (a && a.length > 20 ? `${a.slice(0, 10)}…${a.slice(-8)}` : a || '');
+  function payback(days) {
+    if (days == null || !Number.isFinite(days)) return 'Not at today’s rate';
+    if (days < 45) return `${Math.round(days)} days`;
+    const mo = days / 30.44;
+    return mo > 36 ? 'Over 3 years' : `${mo.toFixed(1)} months`;
+  }
+  const shortAddr = (a) => (a && a.length > 20 ? `${a.slice(0, 8)}…${a.slice(-6)}` : a || '');
 
-  // ----- data shaping -----
-  function plugFor(worker) {
-    const plugs = data?.govee?.plugs || [];
-    const chosen = settings[worker.name]?.plug;
-    if (chosen === 'none') return null;
-    if (chosen) return plugs.find((p) => p.id === chosen) || null;
-    const label = (settings[worker.name]?.label || '').toLowerCase();
-    return plugs.find((p) => {
-      const n = (p.name || '').toLowerCase();
-      return n.includes(worker.name.toLowerCase()) || (label && n.includes(label));
-    }) || null;
+  // ---------- the money model ----------
+  const rate = () => num(S.rate) || data.config.rate;
+  function model() {
+    const pool = data.pool || {};
+    const workers = pool.workers || [];
+    const perHash = pool.network?.prlPerHashDay || null;   // PRL a day per H/s
+    const price = pool.price || null;
+    const r = rate();
+    const assigned = new Set();
+    const rigs = (data.rigs || []).map((cfg, i) => {
+      const o = S.rigs[cfg.id] || {};
+      const workerName = o.worker != null ? o.worker : cfg.worker;
+      const w = workers.find((x) => x.name === workerName) || null;
+      if (w) assigned.add(w.name);
+      const watts = num(o.watts) ?? cfg.watts ?? null;
+      const wattsSrc = num(o.watts) != null ? 'you' : cfg.wattsSource;
+      const cost = num(o.cost) ?? cfg.cost ?? null;
+      const costSrc = num(o.cost) != null ? 'you' : cfg.costSource;
+      const age = w?.lastShare ? (Date.now() - w.lastShare) / 60000 : Infinity;
+      const state = !w ? 'missing' : age < 10 ? 'good' : age < 30 ? 'warn' : 'bad';
+      const online = state === 'good' || state === 'warn';
+      const pace = online ? (w.hashrate6h || w.hashrate1h || w.hashrate) : 0;
+      const prlDay = perHash ? pace * perHash : null;
+      const revDay = prlDay != null && price ? prlDay * price : null;
+      const kwhDay = online && watts ? (watts * 24) / 1000 : 0;
+      const powerDay = kwhDay * r;
+      const netDay = revDay != null ? revDay - powerDay : null;
+      return {
+        id: cfg.id, name: o.name || cfg.name, gpus: cfg.gpus || [], color: COLORS[i % COLORS.length],
+        worker: w, workerName, state, online, pace, prlDay, revDay, watts, wattsSrc, kwhDay, powerDay, netDay,
+        cost, costSrc, paybackDays: cost && netDay > 0 ? cost / netDay : null,
+        powerPerPrl: prlDay ? powerDay / prlDay : null,
+        perWatt: watts && pace ? pace / watts : null,
+      };
+    });
+    // Workers on the pool that no rig claims. Old ones (no share in 6h, no hashrate) are hidden.
+    const extra = workers.filter((w) => !assigned.has(w.name));
+    const strays = extra.filter((w) => w.hashrate > 0 || (w.lastShare && Date.now() - w.lastShare < 6 * 3600e3)).map((w) => {
+      const pace = w.hashrate6h || w.hashrate1h || w.hashrate;
+      const prlDay = perHash ? pace * perHash : null;
+      return { name: w.name, worker: w, pace, prlDay, revDay: prlDay != null && price ? prlDay * price : null };
+    });
+    const hidden = extra.length - strays.length;
+    const sum = (arr, k) => arr.reduce((a, x) => a + (Number.isFinite(x[k]) ? x[k] : 0), 0);
+    const all = [...rigs, ...strays];
+    const fleet = {
+      pace: sum(all, 'pace'),
+      prlDay: perHash ? sum(all, 'prlDay') : null,
+      revDay: price && perHash ? sum(all, 'revDay') : null,
+      watts: rigs.filter((x) => x.online).reduce((a, x) => a + (x.watts || 0), 0),
+      kwhDay: sum(rigs, 'kwhDay'),
+      powerDay: sum(rigs, 'powerDay'),
+      cost: rigs.reduce((a, x) => a + (x.cost || 0), 0),
+      costEst: rigs.some((x) => x.cost && x.costSrc === 'est'),
+      wattsEst: rigs.some((x) => x.online && x.wattsSrc === 'est'),
+      online: rigs.filter((x) => x.online).length,
+    };
+    fleet.netDay = fleet.revDay != null ? fleet.revDay - fleet.powerDay : null;
+    fleet.paybackDays = fleet.cost && fleet.netDay > 0 ? fleet.cost / fleet.netDay : null;
+    rigs.forEach((x) => { x.share = fleet.pace ? x.pace / fleet.pace : 0; });
+    return { rigs, strays, hidden, fleet, price, perHash, rate: r };
   }
-  function rigWatts(worker) {
-    const p = plugFor(worker);
-    if (p && Number.isFinite(p.watts)) return { w: p.watts, src: 'plug', plug: p };
-    const est = Number(settings[worker.name]?.est);
-    if (est > 0) return { w: est, src: 'est', plug: p };
-    return { w: null, src: null, plug: p };
+
+  // ---------- count-up numbers (only the hero figures) ----------
+  const shown = {};
+  function tween(el, key, to, fmt) {
+    const from = shown[key] ?? (reduce ? to : 0);
+    shown[key] = to;
+    if (reduce || !Number.isFinite(from) || !Number.isFinite(to) || from === to) { el.textContent = fmt(to); return; }
+    const t0 = performance.now(), dur = 1200;
+    const step = (now) => {
+      const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      el.textContent = fmt(from + (to - from) * e);
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
   }
-  function totals() {
-    const pool = data.pool, cfg = data.config;
-    const plugW = (data.govee?.plugs || []).filter((p) => Number.isFinite(p.watts));
-    let w, src;
-    if (plugW.length) { w = plugW.reduce((a, p) => a + p.watts, 0); src = `${plugW.length} Govee plug${plugW.length > 1 ? 's' : ''}`; }
-    else {
-      const ests = (pool?.workers || []).map((x) => Number(settings[x.name]?.est)).filter((n) => n > 0);
-      if (ests.length) { w = ests.reduce((a, b) => a + b, 0); src = 'your estimates'; }
-      else { w = cfg.estWatts; src = 'estimate'; }
+
+  // ---------- hologram ----------
+  const Holo = (() => {
+    const cv = $('holo'), ctx = cv.getContext('2d');
+    let W = 0, H = 0, running = false, visible = true, last = 0, rot = 0, hits = [];
+    let rigs = [];
+    const angles = [];
+    const motes = Array.from({ length: 28 }, () => ({ x: Math.random() * 2 - 1, y: Math.random(), v: .04 + Math.random() * .08, s: .6 + Math.random() * 1.2 }));
+    function resize() {
+      const r = cv.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = r.width; H = r.height;
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (!running) draw(performance.now(), 0);
     }
-    const kwh = (w * 24) / 1000;
-    const cost = kwh * cfg.rate;
-    const earnedPrl = pool?.paid24h ?? null;
-    const earnedUsd = earnedPrl != null && pool?.price ? earnedPrl * pool.price : null;
-    return { w, src, kwh, cost, earnedPrl, earnedUsd, net: earnedUsd != null ? earnedUsd - cost : null };
-  }
+    function set(list) {
+      rigs = list;
+      while (angles.length < rigs.length) angles.push(Math.PI * (0.15 + angles.length * 0.72));
+      if (!running) draw(performance.now(), 0);
+    }
+    function rgba(hex, a) {
+      const n = parseInt(hex.slice(1), 16);
+      return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`;
+    }
+    function draw(now, dt) {
+      if (!W || !H) return;
+      const t = now / 1000;
+      ctx.clearRect(0, 0, W, H);
+      const cx = W / 2, cy = H * 0.43, R = Math.min(W * 0.155, H * 0.19);
+      rot += dt * 0.32;
+      rigs.forEach((r, i) => { if (r.online) angles[i] += dt * (0.16 + 1.25 * r.share); });
+      const flick = 0.93 + 0.07 * Math.sin(t * 17) * Math.sin(t * 3.1);
+      ctx.globalAlpha = flick;
 
-  // ----- render -----
+      // projector emitter
+      const by = H * 0.9, brx = R * 1.55, bry = R * 0.24;
+      const cone = ctx.createLinearGradient(0, by, 0, cy - R * 1.2);
+      cone.addColorStop(0, 'rgba(133,241,223,.22)');
+      cone.addColorStop(.55, 'rgba(154,214,255,.07)');
+      cone.addColorStop(1, 'rgba(154,214,255,0)');
+      ctx.fillStyle = cone;
+      ctx.beginPath();
+      ctx.moveTo(cx - brx * .9, by); ctx.lineTo(cx - R * 1.35, cy - R * .2);
+      ctx.lineTo(cx + R * 1.35, cy - R * .2); ctx.lineTo(cx + brx * .9, by); ctx.closePath(); ctx.fill();
+      // rising motes inside the beam
+      motes.forEach((m) => {
+        m.y -= m.v * dt; if (m.y < 0) { m.y = 1; m.x = Math.random() * 2 - 1; }
+        const yy = cy + (by - cy) * m.y, spread = R * 1.35 + (brx * .9 - R * 1.35) * m.y;
+        ctx.fillStyle = `rgba(234,243,255,${(0.5 * Math.sin(m.y * Math.PI)).toFixed(3)})`;
+        ctx.beginPath(); ctx.arc(cx + m.x * spread * .85, yy, m.s, 0, Math.PI * 2); ctx.fill();
+      });
+      for (let k = 0; k < 3; k++) {
+        ctx.strokeStyle = `rgba(154,214,255,${0.5 - k * 0.15})`; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.ellipse(cx, by + k * 5, brx * (1 - k * .12), bry * (1 - k * .12), 0, 0, Math.PI * 2); ctx.stroke();
+      }
+      const pad = ctx.createRadialGradient(cx, by, 0, cx, by, brx);
+      pad.addColorStop(0, 'rgba(133,241,223,.35)'); pad.addColorStop(1, 'rgba(133,241,223,0)');
+      ctx.fillStyle = pad; ctx.beginPath(); ctx.ellipse(cx, by, brx, bry, 0, 0, Math.PI * 2); ctx.fill();
+
+      // orbits
+      const tilt = -0.2, n = Math.max(1, rigs.length);
+      const step = n > 1 ? Math.min(0.42, 0.95 / (n - 1)) : 0;
+      const orbit = (i) => { const rx = R * (1.72 + i * step); return { rx, ry: rx * 0.3 }; };
+      const pos = (i) => {
+        const { rx, ry } = orbit(i), a = angles[i];
+        const ex = rx * Math.cos(a), ey = ry * Math.sin(a);
+        return { x: cx + ex * Math.cos(tilt) - ey * Math.sin(tilt), y: cy + ex * Math.sin(tilt) + ey * Math.cos(tilt), front: Math.sin(a) > 0 };
+      };
+      const ring = (i, from, to) => {
+        const { rx, ry } = orbit(i), r = rigs[i];
+        ctx.strokeStyle = rgba(r.online ? r.color : '#60789a', from === 0 ? .55 : .22);
+        ctx.lineWidth = 1; ctx.setLineDash(r.online ? [] : [3, 5]);
+        ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, tilt, from, to); ctx.stroke(); ctx.setLineDash([]);
+      };
+      const node = (i) => {
+        const r = rigs[i], p = pos(i), size = 3.5 + 8 * Math.sqrt(r.share || 0);
+        const col = r.online ? r.color : '#60789a';
+        if (r.online) {
+          const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, size * 3.2);
+          g.addColorStop(0, rgba(col, .55)); g.addColorStop(1, rgba(col, 0));
+          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, size * 3.2, 0, Math.PI * 2); ctx.fill();
+        }
+        const blink = r.online ? 1 : (0.35 + 0.35 * Math.sin(t * 4));
+        ctx.fillStyle = rgba(col, p.front ? blink : blink * .6);
+        ctx.beginPath(); ctx.arc(p.x, p.y, size, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = `rgba(255,255,255,${p.front ? .85 : .45})`;
+        ctx.beginPath(); ctx.arc(p.x - size * .3, p.y - size * .3, size * .32, 0, Math.PI * 2); ctx.fill();
+        hits.push({ x: p.x, y: p.y, r: size + 14, id: r.id });
+      };
+      hits = [];
+      rigs.forEach((_, i) => ring(i, Math.PI, Math.PI * 2));
+      rigs.forEach((_, i) => { if (!pos(i).front) node(i); });
+
+      // the pearl
+      const halo = ctx.createRadialGradient(cx, cy, R * .7, cx, cy, R * 2.1);
+      halo.addColorStop(0, 'rgba(194,178,255,.28)'); halo.addColorStop(1, 'rgba(194,178,255,0)');
+      ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(cx, cy, R * 2.1, 0, Math.PI * 2); ctx.fill();
+      ctx.save();
+      ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.clip();
+      const body = ctx.createRadialGradient(cx - R * .38, cy - R * .42, R * .04, cx, cy, R * 1.05);
+      body.addColorStop(0, 'rgba(255,255,255,.96)');
+      body.addColorStop(.28, 'rgba(240,231,255,.88)');
+      body.addColorStop(.65, 'rgba(170,190,250,.62)');
+      body.addColorStop(1, 'rgba(52,80,150,.55)');
+      ctx.fillStyle = body; ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
+      if (ctx.createConicGradient) {
+        const ir = ctx.createConicGradient(rot, cx, cy);
+        ['#ffb4dc', '#c2b2ff', '#9ad6ff', '#85f1df', '#ffe2a1', '#ffb4dc'].forEach((c, k, a) => ir.addColorStop(k / (a.length - 1), c));
+        ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = .6 * flick;
+        ctx.fillStyle = ir; ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
+        ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = flick;
+      }
+      // wireframe: meridians turn, parallels hold
+      ctx.strokeStyle = 'rgba(234,243,255,.22)'; ctx.lineWidth = .8;
+      for (let k = 0; k < 6; k++) {
+        const ph = rot * .7 + (k * Math.PI) / 6;
+        ctx.beginPath(); ctx.ellipse(cx, cy, Math.abs(Math.cos(ph)) * R, R, 0, 0, Math.PI * 2); ctx.stroke();
+      }
+      for (let j = -2; j <= 2; j++) {
+        const lat = (j * Math.PI) / 6.5, rr = Math.cos(lat) * R;
+        ctx.beginPath(); ctx.ellipse(cx, cy + Math.sin(lat) * R, rr, rr * .2, 0, 0, Math.PI * 2); ctx.stroke();
+      }
+      // a scan band rolling down the projection
+      const sy = cy - R + ((t * 0.28) % 1) * R * 2.4;
+      const band = ctx.createLinearGradient(0, sy - R * .18, 0, sy + R * .18);
+      band.addColorStop(0, 'rgba(234,243,255,0)'); band.addColorStop(.5, 'rgba(234,243,255,.22)'); band.addColorStop(1, 'rgba(234,243,255,0)');
+      ctx.fillStyle = band; ctx.fillRect(cx - R, sy - R * .18, R * 2, R * .36);
+      ctx.restore();
+      ctx.strokeStyle = 'rgba(234,243,255,.55)'; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
+
+      rigs.forEach((_, i) => ring(i, 0, Math.PI));
+      rigs.forEach((_, i) => { if (pos(i).front) node(i); });
+      ctx.globalAlpha = 1;
+      cv.classList.toggle('can-tap', hits.length > 0);
+    }
+    function loop(now) {
+      if (!running) return;
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      draw(now, dt);
+      requestAnimationFrame(loop);
+    }
+    function sync() {
+      const want = !reduce && visible && !document.hidden;
+      if (want && !running) { running = true; last = performance.now(); requestAnimationFrame(loop); }
+      if (!want) running = false;
+    }
+    new ResizeObserver(resize).observe(cv);
+    new IntersectionObserver((es) => { visible = es[0].isIntersecting; sync(); }).observe(cv);
+    document.addEventListener('visibilitychange', sync);
+    cv.addEventListener('click', (e) => {
+      const b = cv.getBoundingClientRect(), x = e.clientX - b.left, y = e.clientY - b.top;
+      const hit = hits.find((h) => Math.hypot(h.x - x, h.y - y) < h.r);
+      if (!hit) return;
+      const card = document.getElementById(`rig-${hit.id}`);
+      if (!card) return;
+      card.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+      card.classList.remove('flash'); void card.offsetWidth; card.classList.add('flash');
+    });
+    sync();
+    return { set };
+  })();
+
+  // ---------- render ----------
   function render() {
     if (!data) return;
-    const { pool, config: cfg } = data;
-    $('wallet').textContent = `${shortAddr(cfg.wallet)} · ${(cfg.rate * 100).toFixed(1)}¢/kWh`;
+    const pool = data.pool, cfg = data.config;
+    $('wallet').textContent = `${shortAddr(cfg.wallet)} on HeroMiners`;
     $('wallet').title = cfg.wallet;
-    $('rateNote').textContent = `$${cfg.rate.toFixed(3)}/kWh`;
+    const fresh = data.lastPoll && Date.now() - data.lastPoll < cfg.pollMs * 2.2;
+    $('live').className = `chip ${!data.lastPoll ? '' : fresh ? 'good' : 'warn'}`;
+    $('liveText').textContent = data.lastPoll ? `Updated ${ago(data.lastPoll)}` : 'First check running';
+    $('price').innerHTML = `PRL <b>${pool?.price ? usd(pool.price) : '—'}</b>`;
+    if (!pool) { $('foot').textContent = 'Waiting for HeroMiners.'; renderErrors(); return; }
 
-    // live pill
-    const fresh = data.lastPoll && Date.now() - data.lastPoll < data.config.pollMs * 2.2;
-    $('live').className = `pill ${!data.lastPoll ? '' : fresh ? 'good' : 'warn'}`;
-    const nextIn = data.nextPoll ? Math.max(0, Math.round((data.nextPoll - Date.now()) / 60000)) : null;
-    $('liveText').textContent = data.lastPoll ? `Updated ${ago(data.lastPoll)}${nextIn != null ? ` · next in ${nextIn || '<1'} min` : ''}` : 'First check running';
-    $('price').textContent = pool?.price ? `PRL $${pool.price.toFixed(3)}` : 'PRL —';
+    const M = model(), F = M.fleet;
+    Holo.set(M.rigs.map((r) => ({ id: r.id, color: r.color, share: r.share, online: r.online })));
 
-    if (!pool) { $('foot').textContent = 'Waiting for HeroMiners…'; renderErrors(); return; }
-    const t = totals();
-    const h = hashParts(pool.hashrate1h || pool.hashrate);
-    const eff = t.w ? (pool.hashrate24h || pool.hashrate) / t.w : null;
-    const prlPerKwh = t.kwh && t.earnedPrl != null ? t.earnedPrl / t.kwh : null;
-    const netCls = t.net == null ? '' : t.net >= 0 ? 'pos' : 'neg';
-    const ws = pool.workers || [];
-    const down = ws.filter((w) => !w.lastShare || Date.now() - w.lastShare > 10 * 60000);
-    const up = ws.length - down.length;
-    $('tiles').innerHTML = `
-      <div class="tile hero"><span class="label">Net profit, last 24h</span>
-        <span class="v ${netCls}">${usd(t.net)}<small>/day</small></span>
-        <span class="s">${usd(t.earnedUsd)} earned − ${usd(t.cost)} power</span></div>
-      <div class="tile"><span class="label">Hashrate · 1h avg</span>
-        <span class="v">${h.n}<small>${h.u}</small></span>
-        <span class="s">24h avg ${fmtHash(pool.hashrate24h)}</span></div>
-      <div class="tile"><span class="label">Power draw</span>
-        <span class="v">${t.w != null ? Math.round(t.w).toLocaleString() : '—'}<small>W</small></span>
-        <span class="s">From ${esc(t.src)} · ${t.kwh.toFixed(1)} kWh/day</span></div>
-      <div class="tile"><span class="label">Paid, last 24h</span>
-        <span class="v">${prl(t.earnedPrl, 2)}<small>PRL</small></span>
-        <span class="s">${usd(t.earnedUsd)} at today's price</span></div>
-      <div class="tile"><span class="label">Power cost</span>
-        <span class="v">${usd(t.cost)}<small>/day</small></span>
-        <span class="s">${usd(t.cost * 30, 0)} per 30 days</span></div>
-      <div class="tile"><span class="label">Rigs mining</span>
-        <span class="v ${up < ws.length ? 'neg' : ''}">${up}<small>of ${ws.length}</small></span>
-        <span class="s">${up < ws.length ? 'Check ' + esc(down.map((w) => settings[w.name]?.label || w.name).join(', ')) : 'All sending shares'}</span></div>
-      <div class="tile"><span class="label">Efficiency</span>
-        <span class="v">${eff != null ? fmtHash(eff).split(' ')[0] : '—'}<small>${eff != null ? fmtHash(eff).split(' ')[1] + '/W' : ''}</small></span>
-        <span class="s">${prlPerKwh != null ? prl(prlPerKwh, 3) + ' PRL per kWh' : 'Needs watts'}</span></div>`;
+    // hero
+    const unit = hashParts(F.pace).u || 'TH/s';
+    const div = 1000 ** UNITS.indexOf(unit);
+    tween($('fleetTh'), 'th', F.pace / div, (v) => v.toFixed(1));
+    $('fleetUnit').textContent = unit;
+    $('fleetCap').textContent = `Right now ${hashStr(pool.hashrate)}, 24h average ${hashStr(pool.hashrate24h)}. Network ${hashStr(pool.network?.hashrate)}.`;
+    $('legend').innerHTML = M.rigs.map((r) => `<li class="${r.online ? '' : 'off'}" style="--c:${r.color}"><span class="dot"></span><b>${esc(r.name)}</b>${r.online ? hashStr(r.pace) : 'offline'}</li>`).join('');
+    tween($('netDay'), 'net', F.netDay ?? 0, (v) => usd(v));
+    $('netWrap').className = `v ${F.netDay == null ? '' : F.netDay >= 0 ? 'pos' : 'neg'}`;
+    $('netCap').textContent = F.netDay == null ? 'Needs the PRL price from the pool' : `${usd(F.netDay * 30.44, 0)} a month, after ${usd(F.powerDay)} of power a day`;
 
+    // ledger
+    const paid7 = pool.paid7d != null ? pool.paid7d / 7 : null;
+    const match = paid7 && F.prlDay ? Math.round((paid7 / F.prlDay) * 100) : null;
+    $('ledger').innerHTML = `
+      <div class="cell"><span class="lab">Earning</span><span class="v">${usd(F.revDay)}<small>a day</small></span><span class="s">${prl(F.prlDay)} PRL at ${usd(M.price)}</span></div>
+      <div class="cell"><span class="lab">Power</span><span class="v">${usd(F.powerDay)}<small>a day</small></span><span class="s">${wattsStr(F.watts)}${F.wattsEst ? '<span class="est">est</span>' : ''}, ${usd(F.powerDay * 30.44, 0)} a month</span></div>
+      <div class="cell"><span class="lab">Pool actually paid</span><span class="v">${prl(paid7)}<small>PRL a day</small></span><span class="s">7-day average${match ? `, ${match}% of expected` : ''}</span></div>
+      <div class="cell"><span class="lab">Rigs cost</span><span class="v">${F.cost ? usd(F.cost, 0) : '—'}${F.costEst ? '<span class="est">est</span>' : ''}</span><span class="s">${F.paybackDays ? `Pays back in ${payback(F.paybackDays).toLowerCase()} at today's net` : 'No payback at today’s net'}</span></div>`;
+
+    renderRigs(M);
     renderChart();
-    renderRigs();
-    renderPlugs();
     renderPay();
-    renderSettings();
-    $('foot').textContent = `Server checks HeroMiners and Govee every ${Math.round(cfg.pollMs / 60000)} minutes. Pool data ${ago(pool.fetchedAt)}.`;
+    renderPlugs();
+    renderSetup();
+    $('foot').textContent = `The server checks the pool every ${Math.round(cfg.pollMs / 60000)} minutes; pool data is from ${ago(pool.fetchedAt)}. Earnings use each rig's 6-hour hashrate and the current network difficulty. Power at ${usd(M.rate, 3)}/kWh.${M.hidden ? ` ${M.hidden} old worker${M.hidden > 1 ? 's' : ''} with no shares in 6 hours hidden.` : ''}`;
     renderErrors();
   }
 
@@ -310,161 +633,200 @@ footer { font-size: .8rem; color: var(--muted); display: grid; gap: 4px; }
     $('errs').textContent = e.length ? `Last problem (${ago(e[0].t)}): ${e[0].msg}` : '';
   }
 
+  function glyph(color, online) {
+    return `<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="12" rx="11" ry="4" fill="none" stroke="${online ? color : '#60789a'}" stroke-opacity=".7" transform="rotate(-12 12 12)"/><circle cx="12" cy="12" r="5" fill="#d9ccff" fill-opacity=".85"/><circle cx="21" cy="10" r="2.6" fill="${online ? color : '#60789a'}"/></svg>`;
+  }
+
+  function spark(names, color) {
+    const pts = (data.history || []).map((p) => [p.t, names.reduce((a, n) => a + (p.workers?.[n] || 0), 0)]).filter((p) => p[1] > 0);
+    if (pts.length < 2) return '';
+    const W = 300, H = 40, max = Math.max(...pts.map((p) => p[1])) * 1.1 || 1, t0 = pts[0][0], t1 = pts.at(-1)[0];
+    const x = (t) => ((t - t0) / (t1 - t0 || 1)) * (W - 4) + 2, y = (v) => 2 + (1 - v / max) * (H - 4);
+    const d = pts.map((p, i) => `${i ? 'L' : 'M'}${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join('');
+    return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+      <path d="${d}L${x(pts.at(-1)[0])},${H}L${x(t0)},${H}Z" fill="${color}" fill-opacity=".08"/>
+      <path d="${d}" fill="none" stroke="${color}" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>`;
+  }
+
+  function renderRigs(M) {
+    $('rigNote').textContent = `${M.fleet.online} of ${M.rigs.length} mining`;
+    const label = { good: 'Mining', warn: 'Slow shares', bad: 'Offline', missing: 'Worker not found' };
+    const cards = M.rigs.map((r) => {
+      const w = r.worker;
+      const stale = w && w.sharesGood ? ((w.sharesStale + w.sharesInvalid) / (w.sharesGood + w.sharesStale + w.sharesInvalid)) * 100 : 0;
+      const powerTxt = r.online ? usd(r.powerDay) : '$0.00';
+      const netCls = r.netDay == null ? '' : r.netDay >= 0 ? 'pos' : 'neg';
+      return `<article class="glass rig" id="rig-${esc(r.id)}" style="--c:${r.color}">
+        <div class="rig-head">
+          <div class="rig-id">${glyph(r.color, r.online)}<div style="min-width:0"><h3>${esc(r.name)}</h3>
+            <div class="gpus">${r.gpus.map((g) => `<span>${esc(g)}</span>`).join('')}</div></div></div>
+          <span class="status ${r.state}"><i></i>${label[r.state]}</span>
+        </div>
+        <div class="rate">
+          <b>${r.online ? hashParts(r.pace).n : '0'}<small>${r.online ? hashParts(r.pace).u : 'TH/s'}</small></b>
+          <span class="s">${w ? `Now ${hashStr(w.hashrate)}, 24h ${hashStr(w.hashrate24h)}` : `No pool worker named ${esc(r.workerName || '—')}`}</span>
+        </div>
+        <div class="share"><div class="track"><i style="width:${(r.share * 100).toFixed(1)}%"></i></div><span>${(r.share * 100).toFixed(0)}% of the fleet</span></div>
+        <div class="money">
+          <div><span>Earning</span><b>${usd(r.revDay)}</b><small>${prl(r.prlDay)} PRL/day</small></div>
+          <div><span>Power</span><b>${powerTxt}</b><small>${r.online ? `${usd(r.powerDay * 30.44, 0)}/mo` : 'not counted'}</small></div>
+          <div><span>Net</span><b class="${netCls}">${usd(r.netDay)}</b><small>${usd(r.netDay != null ? r.netDay * 30.44 : null, 0)}/mo</small></div>
+        </div>
+        <dl class="facts">
+          <div><dt>Rig cost</dt><dd>${r.cost ? usd(r.cost, 0) : '—'}${r.cost && r.costSrc === 'est' ? '<span class="est">est</span>' : ''}</dd></div>
+          <div><dt>Pays back in</dt><dd>${payback(r.paybackDays)}</dd></div>
+          <div><dt>Draw at the wall</dt><dd>${wattsStr(r.watts)}${r.wattsSrc === 'est' ? '<span class="est">est</span>' : ''}</dd></div>
+          <div><dt>Power cost per PRL</dt><dd>${r.powerPerPrl != null && r.online ? usd(r.powerPerPrl) : '—'}</dd></div>
+          <div><dt>Efficiency</dt><dd>${r.perWatt ? `${hashStr(r.perWatt)} per W` : '—'}</dd></div>
+          <div><dt>Last share</dt><dd>${w ? ago(w.lastShare) : '—'}</dd></div>
+        </dl>
+        ${spark(w ? [w.name] : [], r.color)}
+        <div class="rig-foot">${esc(r.workerName || 'no worker')}${w ? `, ${w.sharesGood.toLocaleString()} good shares, ${stale.toFixed(2)}% stale or invalid` : ''}</div>
+      </article>`;
+    });
+    M.strays.forEach((s) => {
+      cards.push(`<article class="glass rig unassigned">
+        <div class="rig-head"><div style="min-width:0"><h3>${esc(s.name)}</h3><div class="gpus"><span>Not linked to a rig</span></div></div><span class="status good"><i></i>Mining</span></div>
+        <div class="rate"><b>${hashParts(s.pace).n}<small>${hashParts(s.pace).u}</small></b><span class="s">Earning ${usd(s.revDay)} a day. Pick this worker for a rig in Rig setup to count its power.</span></div>
+      </article>`);
+    });
+    $('rigs').innerHTML = cards.join('') || '<div class="glass rig"><span class="muted">No rigs configured.</span></div>';
+  }
+
+  let chartKey = '';
   function renderChart() {
     const svg = $('chart');
-    // Draw at the element's real width so labels stay readable on a phone.
-    const W = Math.max(300, Math.round(svg.clientWidth || 640)), H = W < 500 ? 200 : 230, L = 50, R = 44, T = 12, B = 24;
-    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    const W = Math.max(300, Math.round(svg.clientWidth || 640)), H = W < 500 ? 190 : 230, L = 54, R = 12, T = 10, B = 24;
     const pts = (data.pool.hashrateChart || []).filter((p) => Number.isFinite(p[1]));
-    const hist = (data.history || []).filter((p) => Number.isFinite(p.watts));
+    const key = `${W}|${pts.length}|${pts.at(-1)?.[0]}`;
+    if (key === chartKey) return;
+    const animate = chartKey === '' || chartKey.split('|')[2] !== key.split('|')[2];
+    chartKey = key;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
     if (pts.length < 2) { svg.innerHTML = `<text x="${W / 2}" y="${H / 2}" text-anchor="middle">Not enough history yet</text>`; return; }
-    const t0 = Math.min(pts[0][0], hist[0]?.t ?? Infinity), t1 = Math.max(pts.at(-1)[0], hist.at(-1)?.t ?? 0);
-    const hMax = Math.max(...pts.map((p) => p[1])) * 1.1;
+    const t0 = pts[0][0], t1 = pts.at(-1)[0];
+    const hMax = Math.max(...pts.map((p) => p[1])) * 1.12;
     const x = (t) => L + ((t - t0) / (t1 - t0 || 1)) * (W - L - R);
     const y = (v) => T + (1 - v / hMax) * (H - T - B);
     let g = '';
     for (let i = 0; i <= 4; i++) {
-      const v = (hMax / 4) * i, yy = y(v);
-      g += `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" stroke="var(--line)" stroke-width="1"/>`;
-      g += `<text x="${L - 6}" y="${yy + 4}" text-anchor="end">${fmtHash(v).replace(' ', '')}</text>`;
+      const v = (hMax / 4) * i, yy = y(v).toFixed(1);
+      g += `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" stroke="rgba(176,214,255,.08)"/>`;
+      g += `<text x="${L - 8}" y="${+yy + 4}" text-anchor="end">${i ? hashStr(v, 0) : '0'}</text>`;
     }
     const span = t1 - t0, step = span > 12 * 3600e3 ? 6 * 3600e3 : 3 * 3600e3;
     for (let tt = Math.ceil(t0 / step) * step; tt <= t1; tt += step) {
-      const d = new Date(tt);
-      g += `<text x="${x(tt)}" y="${H - 6}" text-anchor="middle">${d.toLocaleTimeString([], { hour: 'numeric' })}</text>`;
+      g += `<text x="${x(tt).toFixed(1)}" y="${H - 6}" text-anchor="middle">${new Date(tt).toLocaleTimeString([], { hour: 'numeric' })}</text>`;
     }
     const line = pts.map((p, i) => `${i ? 'L' : 'M'}${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join('');
-    const area = `${line}L${x(pts.at(-1)[0]).toFixed(1)},${y(0)}L${x(pts[0][0]).toFixed(1)},${y(0)}Z`;
-    let wPath = '', wAxis = '';
-    if (hist.length >= 2) {
-      const wMax = Math.max(...hist.map((p) => p.watts)) * 1.15 || 1;
-      const yw = (v) => T + (1 - v / wMax) * (H - T - B);
-      wPath = `<path d="${hist.map((p, i) => `${i ? 'L' : 'M'}${x(p.t).toFixed(1)},${yw(p.watts).toFixed(1)}`).join('')}" fill="none" stroke="var(--warn)" stroke-width="1.6" stroke-dasharray="4 3"/>`;
-      wAxis = `<text x="${W - R + 6}" y="${yw(wMax / 1.15) + 4}">${Math.round(wMax / 1.15)}W</text><text x="${W - R + 6}" y="${yw(0) + 4}">0W</text>`;
-    }
+    const area = `${line}L${x(t1).toFixed(1)},${y(0).toFixed(1)}L${x(t0).toFixed(1)},${y(0).toFixed(1)}Z`;
     const last = pts.at(-1);
-    svg.innerHTML = `<defs><linearGradient id="hg" x1="0" x2="0" y1="0" y2="1">
-        <stop offset="0" stop-color="var(--accent)" stop-opacity=".32"/><stop offset="1" stop-color="var(--accent-2)" stop-opacity=".03"/></linearGradient>
-        <linearGradient id="hl" x1="0" x2="1"><stop offset="0" stop-color="var(--accent)"/><stop offset="1" stop-color="var(--accent-2)"/></linearGradient></defs>
-      ${g}<path d="${area}" fill="url(#hg)"/><path d="${line}" fill="none" stroke="url(#hl)" stroke-width="2" stroke-linejoin="round"/>
-      ${wPath}${wAxis}
-      <circle cx="${x(last[0])}" cy="${y(last[1])}" r="4" fill="var(--accent-2)" stroke="var(--surface)" stroke-width="2"/>`;
-    $('legend').innerHTML = `<span><i style="background:var(--accent)"></i>Pool-side hashrate (all rigs)</span>${hist.length >= 2 ? '<span><i style="background:var(--warn)"></i>Govee watts</span>' : ''}`;
+    svg.innerHTML = `<defs>
+        <linearGradient id="ca" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#9ad6ff" stop-opacity=".22"/><stop offset="1" stop-color="#c2b2ff" stop-opacity="0"/></linearGradient>
+        <linearGradient id="cl" x1="0" x2="1"><stop offset="0" stop-color="#ffb4dc"/><stop offset=".35" stop-color="#c2b2ff"/><stop offset=".65" stop-color="#9ad6ff"/><stop offset="1" stop-color="#85f1df"/></linearGradient>
+        <filter id="glow" x="-10%" y="-50%" width="120%" height="200%"><feGaussianBlur stdDeviation="3"/></filter></defs>
+      ${g}<path d="${area}" fill="url(#ca)"/>
+      <path d="${line}" fill="none" stroke="url(#cl)" stroke-width="5" stroke-opacity=".35" filter="url(#glow)" pathLength="1" class="${animate ? 'draw' : ''}"/>
+      <path d="${line}" fill="none" stroke="url(#cl)" stroke-width="1.8" stroke-linejoin="round" pathLength="1" class="${animate ? 'draw' : ''}"/>
+      <circle cx="${x(last[0]).toFixed(1)}" cy="${y(last[1]).toFixed(1)}" r="4" fill="#85f1df" stroke="#040b17" stroke-width="2"/>`;
+    $('chartNote').textContent = `Peak ${hashStr(Math.max(...pts.map((p) => p[1])))}`;
   }
 
-  function spark(name) {
-    const pts = (data.history || []).map((p) => [p.t, p.workers?.[name]]).filter((p) => Number.isFinite(p[1]));
-    if (pts.length < 2) return '<div class="muted" style="font-size:.78rem">Trend fills in as the server keeps checking</div>';
-    const W = 300, H = 44, max = Math.max(...pts.map((p) => p[1])) * 1.1 || 1, t0 = pts[0][0], t1 = pts.at(-1)[0];
-    const x = (t) => ((t - t0) / (t1 - t0 || 1)) * (W - 6) + 3, y = (v) => 3 + (1 - v / max) * (H - 6);
-    const d = pts.map((p, i) => `${i ? 'L' : 'M'}${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join('');
-    const l = pts.at(-1);
-    return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
-      <path d="${d}L${x(l[0])},${H}L${x(pts[0][0])},${H}Z" fill="var(--accent-soft)"/>
-      <path d="${d}" fill="none" stroke="var(--accent)" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg>`;
-  }
-
-  function renderRigs() {
-    const ws = data.pool.workers || [];
-    $('rigNote').textContent = `${ws.length} worker${ws.length === 1 ? '' : 's'} on the pool`;
-    if (!ws.length) { $('rigs').innerHTML = '<div class="rig bad"><b>No workers online.</b><span class="muted">HeroMiners has no recent shares from this wallet.</span></div>'; return; }
-    $('rigs').innerHTML = ws.map((w) => {
-      const age = w.lastShare ? (Date.now() - w.lastShare) / 60000 : Infinity;
-      const st = age < 10 ? ['', 'good', 'Mining'] : age < 30 ? ['warn', 'warn', 'Slow shares'] : ['bad', 'bad', 'Offline'];
-      const rw = rigWatts(w);
-      const eff = rw.w ? (w.hashrate1h || w.hashrate) / rw.w : null;
-      const stale = w.sharesGood ? ((w.sharesStale + w.sharesInvalid) / (w.sharesGood + w.sharesStale + w.sharesInvalid)) * 100 : 0;
-      const label = settings[w.name]?.label || w.name;
-      return `<article class="rig ${st[0]}">
-        <div class="rig-head"><div style="min-width:0"><h3>${esc(label)}</h3><div class="w">${[label !== w.name && w.name, rw.plug && rw.plug.name, w.agent].filter(Boolean).map(esc).join(' · ')}</div></div>
-          <span class="pill ${st[1]}"><span class="dot"></span>${st[2]}</span></div>
-        <div class="kv">
-          <div><span>Now</span><b>${fmtHash(w.hashrate)}</b></div>
-          <div><span>1h avg</span><b>${fmtHash(w.hashrate1h)}</b></div>
-          <div><span>24h avg</span><b>${fmtHash(w.hashrate24h)}</b></div>
-          <div><span>Watts</span><b>${rw.w != null ? watts(rw.w) : '—'}${rw.src === 'est' ? '<small class="muted"> est</small>' : ''}</b></div>
-          <div><span>Per watt</span><b>${eff != null ? fmtHash(eff) : '—'}</b></div>
-          <div><span>Last share</span><b>${ago(w.lastShare)}</b></div>
-        </div>
-        ${spark(w.name)}
-        <div class="muted" style="font-size:.8rem">${w.sharesGood.toLocaleString()} good shares · ${stale.toFixed(2)}% stale/invalid${w.region ? ' · ' + esc(w.region) : ''}</div>
-      </article>`;
-    }).join('');
+  function renderPay() {
+    const p = data.pool, min = p.minPayout || 0, price = p.price || 0;
+    const pct = min ? Math.min(100, (p.balance / min) * 100) : 0;
+    $('pay').innerHTML = `
+      <div style="display:grid;gap:7px">
+        <div class="sect-head"><span class="muted" style="font-size:.85rem">Toward the next payout</span><span>${prl(p.balance, 3)}${min ? ` of ${prl(min)}` : ''} PRL</span></div>
+        ${min ? `<div class="payout-bar" role="progressbar" aria-valuenow="${pct.toFixed(0)}" aria-valuemin="0" aria-valuemax="100" aria-label="Balance toward payout"><i style="width:${pct.toFixed(1)}%"></i></div>` : ''}
+      </div>
+      <div class="rows" style="margin-top:10px">
+        <div class="row"><span class="l">Paid in the last 24 hours</span><span class="r">${prl(p.paid24h)} PRL, ${usd(p.paid24h * price)}</span></div>
+        <div class="row"><span class="l">Paid in the last 7 days</span><span class="r">${prl(p.paid7d)} PRL, ${usd(p.paid7d * price)}</span></div>
+        <div class="row"><span class="l">Paid all time</span><span class="r">${prl(p.paid)} PRL, ${usd(p.paid * price)}</span></div>
+      </div>
+      <div class="muted" style="font-size:.85rem;margin-top:12px">Recent payouts</div>
+      <div class="rows">${(p.payments || []).slice(0, 5).map((x) => `<div class="row"><span class="l faint">${new Date(x.t).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span><span class="r">${prl(x.amount, 3)} PRL</span></div>`).join('') || '<span class="muted">None yet</span>'}</div>`;
   }
 
   function renderPlugs() {
     const g = data.govee;
-    if (!g.enabled) { $('plugs').innerHTML = '<span class="muted">No Govee API key set on the server.</span>'; $('plugNote').innerHTML = ''; return; }
-    if (g.error && !g.plugs.length) { $('plugs').innerHTML = `<span class="muted">Govee didn't answer: ${esc(g.error)}</span>`; $('plugNote').innerHTML = ''; return; }
-    if (!g.plugs.length) { $('plugs').innerHTML = '<span class="muted">No plugs found on this Govee account yet.</span>'; $('plugNote').innerHTML = ''; return; }
-    $('plugs').innerHTML = g.plugs.map((p) => {
-      const stateTxt = p.error ? 'error' : p.online === false ? 'offline' : p.on === false ? 'off' : 'on';
-      const extra = [p.volts && `${p.volts.toFixed(0)} V`, p.amps && `${p.amps.toFixed(2)} A`].filter(Boolean).join(' · ');
-      return `<div class="row"><span class="l">${esc(p.name)} <span class="muted mono" style="font-size:.75rem">${esc(p.sku)} · ${stateTxt}${extra ? ' · ' + extra : ''}</span></span>
-        <span class="r">${Number.isFinite(p.watts) ? watts(p.watts) : '<span class="muted">no watts</span>'}</span></div>`;
+    if (!g.enabled) { $('plugs').innerHTML = '<span class="muted">No Govee API key on the server.</span>'; return; }
+    if (g.error && !g.plugs.length) { $('plugs').innerHTML = `<span class="muted">Govee didn't answer: ${esc(g.error)}</span>`; return; }
+    if (!g.plugs.length) { $('plugs').innerHTML = '<span class="muted">No plugs on this Govee account.</span>'; return; }
+    const rows = g.plugs.map((p) => {
+      const st = p.error ? ['bad', 'Error'] : p.online === false ? ['bad', 'Offline'] : p.on === false ? ['warn', 'Off'] : ['good', 'On'];
+      return `<div class="row"><span class="l">${esc(p.name)}</span><span class="r status ${st[0]}"><i></i>${st[1]}${Number.isFinite(p.watts) ? `, ${wattsStr(p.watts)}` : ''}</span></div>`;
     }).join('');
     const anyWatts = g.plugs.some((p) => Number.isFinite(p.watts));
-    $('plugNote').innerHTML = anyWatts ? '' : `<div class="note warn">Govee's API is returning on/off for these plugs but no wattage, so power and profit use your estimates below. <a href="/api/govee-debug" target="_blank" rel="noopener">See exactly what Govee sends</a>.</div>`;
+    $('plugs').innerHTML = rows + (anyWatts ? '' : '<div class="note" style="margin-top:10px">Govee’s API only reports on and off for these plugs, not watts. Read each rig’s watts in the Govee app and put them in Rig setup.</div>');
   }
 
-  function renderPay() {
-    const p = data.pool, min = p.minPayout || 0;
-    const pct = min ? Math.min(100, (p.balance / min) * 100) : 0;
-    $('pay').innerHTML = `
-      <div style="display:grid;gap:6px">
-        <div class="panel-head"><span class="label">Pending balance</span><span class="mono">${prl(p.balance, 4)} PRL${min ? ` / ${prl(min, 2)}` : ''}</span></div>
-        ${min ? `<div class="bar" role="progressbar" aria-valuenow="${pct.toFixed(0)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct.toFixed(1)}%"></i></div>` : ''}
-      </div>
-      <div class="rows" style="margin-top:8px">
-        <div class="row"><span class="l">Paid last 7 days</span><span class="r">${prl(p.paid7d, 2)} PRL · ${usd(p.paid7d * (p.price || 0))}</span></div>
-        <div class="row"><span class="l">Paid all time</span><span class="r">${prl(p.paid, 2)} PRL · ${usd(p.paid * (p.price || 0))}</span></div>
-      </div>
-      <div class="label" style="margin-top:10px">Recent payouts</div>
-      <div class="rows">${(p.payments || []).slice(0, 6).map((x) => `<div class="row"><span class="l muted">${new Date(x.t).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span><span class="r">${prl(x.amount, 4)} PRL</span></div>`).join('') || '<span class="muted">None yet</span>'}</div>`;
-  }
-
-  let settingsDrawn = '';
-  function renderSettings() {
-    const ws = data.pool?.workers || [], plugs = data.govee?.plugs || [];
-    const sig = JSON.stringify([ws.map((w) => w.name), plugs.map((p) => p.id + p.name)]);
-    if (sig === settingsDrawn) return;   // don't redraw while someone is typing
-    settingsDrawn = sig;
-    $('setList').innerHTML = ws.map((w, i) => {
-      const s = settings[w.name] || {};
-      const opts = ['<option value="">Auto-match by name</option>', `<option value="none"${s.plug === 'none' ? ' selected' : ''}>No plug</option>`]
-        .concat(plugs.map((p) => `<option value="${esc(p.id)}"${s.plug === p.id ? ' selected' : ''}>${esc(p.name)}</option>`)).join('');
-      return `<div class="set"><span class="mono" style="font-size:.8rem">${esc(w.name)}</span><div class="grid">
-        <label for="lab-${i}">Rig name<input id="lab-${i}" data-w="${esc(w.name)}" data-k="label" value="${esc(s.label || '')}" placeholder="e.g. 4090 rig"></label>
-        <label for="plug-${i}">Govee plug<select id="plug-${i}" data-w="${esc(w.name)}" data-k="plug">${opts}</select></label>
-        <label for="est-${i}">Estimated watts<input id="est-${i}" data-w="${esc(w.name)}" data-k="est" type="number" inputmode="numeric" min="0" step="10" value="${esc(s.est || '')}" placeholder="e.g. 650"></label>
-      </div></div>`;
-    }).join('') || '<span class="muted">Rigs show up here once the pool reports them.</span>';
+  let setupKey = '';
+  function renderSetup() {
+    const ws = data.pool?.workers || [];
+    const key = JSON.stringify([ws.map((w) => w.name), (data.rigs || []).map((r) => r.id), S]);
+    if (key === setupKey || document.activeElement?.closest?.('#setup')) return;   // never redraw under a finger
+    setupKey = key;
+    $('rateIn').value = S.rate ?? '';
+    $('rateIn').placeholder = String(data.config.rate);
+    $('setList').innerHTML = (data.rigs || []).map((cfg, i) => {
+      const o = S.rigs[cfg.id] || {};
+      const cur = o.worker != null ? o.worker : cfg.worker;
+      const names = [...new Set([...ws.map((w) => w.name), cfg.worker].filter(Boolean))];
+      const opts = names.map((n) => `<option value="${esc(n)}"${n === cur ? ' selected' : ''}>${esc(n)}${ws.find((w) => w.name === n && w.hashrate > 0) ? '' : ' (idle)'}</option>`).join('') + `<option value=""${cur === '' ? ' selected' : ''}>None</option>`;
+      return `<fieldset class="fs"><legend>${esc(o.name || cfg.name)}</legend><div class="fields">
+        <label for="n-${i}">Name<input id="n-${i}" data-r="${esc(cfg.id)}" data-k="name" value="${esc(o.name || '')}" placeholder="${esc(cfg.name)}"></label>
+        <label for="w-${i}">Pool worker<select id="w-${i}" data-r="${esc(cfg.id)}" data-k="worker">${opts}</select></label>
+        <label for="p-${i}">Watts at the wall<input id="p-${i}" data-r="${esc(cfg.id)}" data-k="watts" type="number" inputmode="numeric" min="0" step="5" value="${esc(o.watts ?? '')}" placeholder="${esc(cfg.watts ?? '')}"></label>
+        <label for="c-${i}">What it cost, $<input id="c-${i}" data-r="${esc(cfg.id)}" data-k="cost" type="number" inputmode="numeric" min="0" step="10" value="${esc(o.cost ?? '')}" placeholder="${esc(cfg.cost ?? '')}"></label>
+      </div></fieldset>`;
+    }).join('') || '<span class="muted">No rigs in rigs.json.</span>';
   }
   $('setList').addEventListener('input', (e) => {
-    const el = e.target.closest('[data-w]'); if (!el) return;
-    rigSet(el.dataset.w)[el.dataset.k] = el.value.trim();
+    const el = e.target.closest('[data-r]'); if (!el) return;
+    const o = (S.rigs[el.dataset.r] ||= {});
+    const v = el.value.trim();
+    if (el.dataset.k === 'worker') o.worker = v; else if (v === '') delete o[el.dataset.k]; else o[el.dataset.k] = v;
     save(); render();
   });
+  $('rateIn').addEventListener('input', (e) => { const v = e.target.value.trim(); if (v === '') delete S.rate; else S.rate = v; save(); render(); });
+  $('resetBtn').addEventListener('click', () => { S = { rigs: {} }; save(); setupKey = ''; document.activeElement?.blur?.(); render(); });
+  $('setup').addEventListener('focusout', () => setTimeout(() => { if (!document.activeElement?.closest?.('#setup')) { setupKey = ''; renderSetup(); } }, 0));
 
-  // ----- fetch loop -----
+  // nacre sheen follows the pointer across glass panes
+  document.addEventListener('pointermove', (e) => {
+    const el = e.target.closest?.('.glass');
+    document.querySelectorAll('.glass.lit').forEach((g) => { if (g !== el) g.classList.remove('lit'); });
+    if (!el) return;
+    const b = el.getBoundingClientRect();
+    el.style.setProperty('--mx', `${e.clientX - b.left}px`);
+    el.style.setProperty('--my', `${e.clientY - b.top}px`);
+    el.classList.add('lit');
+  }, { passive: true });
+
+  // ---------- data loop ----------
   async function load(manual) {
     try {
       const r = await fetch(manual ? '/api/refresh' : '/api/data', { method: manual ? 'POST' : 'GET', cache: 'no-store' });
       if (!r.ok) throw new Error(r.status);
       data = await r.json();
       render();
-    } catch (e) {
-      $('live').className = 'pill bad'; $('liveText').textContent = 'Server unreachable, retrying';
+    } catch {
+      $('live').className = 'chip bad'; $('liveText').textContent = 'Server unreachable, retrying';
     }
   }
   $('refresh').addEventListener('click', async (e) => {
-    e.currentTarget.disabled = true; e.currentTarget.textContent = 'Refreshing…';
+    const b = e.currentTarget; b.disabled = true; b.textContent = 'Checking';
     await load(true);
-    const b = $('refresh'); b.disabled = false; b.textContent = 'Refresh now';
+    b.disabled = false; b.textContent = 'Check pool now';
   });
+  let rw; addEventListener('resize', () => { clearTimeout(rw); rw = setTimeout(() => data && renderChart(), 150); });
+  document.querySelector('.scanbar').addEventListener('animationend', (e) => e.target.remove());
+  setTimeout(() => document.body.classList.remove('boot'), 2200);
   load(false);
-  setInterval(() => load(false), 60_000);           // reads the server's cache; the server polls every 5 min
-  setInterval(() => data && render(), 30_000);      // keep "x min ago" honest between loads
+  setInterval(() => load(false), 60_000);
+  setInterval(() => data && render(), 30_000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) load(false); });
 })();
 </script>

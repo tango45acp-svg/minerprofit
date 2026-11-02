@@ -1,0 +1,36 @@
+{
+  "_note": "Defaults for each rig. watts = draw at the wall; cost = what the rig cost you. Source 'you' = a number Cade gave, 'est' = an estimate to replace. Edit here (or per-browser in the page's Rig setup panel).",
+  "rate": 0.09,
+  "rigs": [
+    {
+      "id": "rig-4090",
+      "name": "4090 rig",
+      "gpus": ["RTX 4090"],
+      "worker": "desktop-d40gemj",
+      "watts": 650,
+      "wattsSource": "you",
+      "cost": 1800,
+      "costSource": "est"
+    },
+    {
+      "id": "rig-5070ti",
+      "name": "Dual 5070 Ti rig",
+      "gpus": ["RTX 5070 Ti", "RTX 5070 Ti"],
+      "worker": "rigD94BE2",
+      "watts": 600,
+      "wattsSource": "est",
+      "cost": 2300,
+      "costSource": "est"
+    },
+    {
+      "id": "rig-4080s",
+      "name": "4080 Super rig",
+      "gpus": ["RTX 4080 Super"],
+      "worker": "desktop-s6ms9t5",
+      "watts": 375,
+      "wattsSource": "est",
+      "cost": 1000,
+      "costSource": "est"
+    }
+  ]
+}

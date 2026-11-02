@@ -3,12 +3,31 @@
 // No dependencies; needs Node 20+ (built-in fetch).
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
+
+// HeroMiners reports Pearl hashrate in difficulty-1 shares per second.
+// One difficulty-1 share = 2^32 hashes, so real H/s = pool number × 2^32
+// (this is exactly the pool's own realHashrate / hashrate ratio).
+const SHARE_HASHES = 2 ** 32;
+
+// Rig defaults (names, worker, watts at the wall, what each rig cost).
+function loadRigs() {
+  try {
+    const raw = process.env.RIGS_JSON || readFileSync(new URL('./rigs.json', import.meta.url), 'utf8');
+    const cfg = JSON.parse(raw);
+    return { rate: Number(cfg.rate) || null, rigs: Array.isArray(cfg.rigs) ? cfg.rigs : [] };
+  } catch (e) {
+    console.error('rigs.json unreadable:', e.message);
+    return { rate: null, rigs: [] };
+  }
+}
+const RIG_CFG = loadRigs();
 
 const PORT = Number(process.env.PORT || 3000);
 const WALLET = (process.env.PRL_WALLET || '').trim();
 const GOVEE_KEY = (process.env.GOVEE_API_KEY || '').trim();
-const RATE = Number(process.env.POWER_RATE || 0.09);           // $ per kWh
+const RATE = Number(process.env.POWER_RATE || RIG_CFG.rate || 0.09); // $ per kWh
 const EST_WATTS = Number(process.env.EST_TOTAL_WATTS || 1500); // used when no plug reports watts
 const POLL_MS = Number(process.env.POLL_MINUTES || 5) * 60_000;
 const POOL = 'https://pearl.herominers.com/api';
@@ -44,13 +63,31 @@ function noteError(where, err) {
 
 // ---------- HeroMiners ----------
 async function pollPool() {
-  const [mine, net] = await Promise.all([
-    getJSON(`${POOL}/stats_address?address=${encodeURIComponent(WALLET)}&recentBlocksAmount=0&longpoll=false`),
-    getJSON(`${POOL}/stats`),
-  ]);
+  // MOCK_POOL=path/to/fixture.json ({mine, net}) lets the page be previewed offline.
+  const [mine, net] = process.env.MOCK_POOL
+    ? (({ mine, net }) => [mine, net])(JSON.parse(await readFile(process.env.MOCK_POOL, 'utf8')))
+    : await Promise.all([
+      getJSON(`${POOL}/stats_address?address=${encodeURIComponent(WALLET)}&recentBlocksAmount=0&longpoll=false`),
+      getJSON(`${POOL}/stats`),
+    ]);
   const units = Number(net?.config?.coinUnits) || 1e8;
   const s = mine.stats || {};
   const coin = (v) => (v == null ? null : Number(v) / units);
+  // Scale pool numbers to real hashes/s. Prefer the pool's own ratio, fall back to 2^32.
+  const ratio = Number(net?.pool?.realHashrate) / Number(net?.pool?.hashrate);
+  const scale = ratio > 1e8 && ratio < 1e11 ? ratio : SHARE_HASHES;
+  const hs = (v) => (Number(v) || 0) * scale;
+  // Expected earnings: each pool-unit of hashrate finds reward·86400/difficulty PRL a day.
+  const difficulty = Number(net?.network?.difficulty) || null;
+  const reward = coin(net?.network?.reward ?? net?.lastblock?.reward);
+  const blockTime = Number(net?.network?.difficultyTarget || net?.config?.coinDifficultyTarget) || null;
+  const network = {
+    difficulty,
+    reward,
+    blockTime,
+    hashrate: difficulty && blockTime ? (difficulty * SHARE_HASHES) / blockTime : null,
+    prlPerHashDay: difficulty && reward ? (reward * 86400) / (difficulty * scale) : null, // PRL/day per real H/s
+  };
   const payments = [];
   const p = mine.payments || [];
   for (let i = 0; i + 1 < p.length; i += 2) {
@@ -61,14 +98,16 @@ async function pollPool() {
     fetchedAt: Date.now(),
     price: Number(net?.pool?.price?.usd) || null,
     networkHeight: Number(s.networkHeight || net?.network?.height) || null,
-    networkDifficulty: Number(net?.network?.difficulty) || null,
-    poolHashrate: Number(net?.pool?.hashrate) || null,
+    networkDifficulty: difficulty,
+    network,
+    hashScale: scale,
+    poolHashrate: hs(net?.pool?.hashrate) || null,
     fee: net?.config?.fee ?? null,
     minPayout: coin(net?.config?.minPaymentThreshold),
-    hashrate: Number(s.hashrate) || 0,
-    hashrate1h: Number(s.hashrate_1h) || 0,
-    hashrate6h: Number(s.hashrate_6h) || 0,
-    hashrate24h: Number(s.hashrate_24h) || 0,
+    hashrate: hs(s.hashrate),
+    hashrate1h: hs(s.hashrate_1h),
+    hashrate6h: hs(s.hashrate_6h),
+    hashrate24h: hs(s.hashrate_24h),
     sharesGood: Number(s.shares_good) || 0,
     sharesStale: Number(s.shares_stale) || 0,
     sharesInvalid: Number(s.shares_invalid) || 0,
@@ -78,13 +117,13 @@ async function pollPool() {
     paid24h: coin(s.payments_24h) ?? 0,
     paid7d: coin(s.payments_7d) ?? 0,
     payments: payments.slice(0, 10),
-    hashrateChart: (mine.charts?.hashrate || []).map(([t, h]) => [t * 1000, Number(h)]),
+    hashrateChart: (mine.charts?.hashrate || []).map(([t, h]) => [t * 1000, hs(h)]),
     workers: (mine.workers || []).map((w) => ({
       name: w.name,
-      hashrate: Number(w.hashrate) || 0,
-      hashrate1h: Number(w.hashrate_1h) || 0,
-      hashrate6h: Number(w.hashrate_6h) || 0,
-      hashrate24h: Number(w.hashrate_24h) || 0,
+      hashrate: hs(w.hashrate),
+      hashrate1h: hs(w.hashrate_1h),
+      hashrate6h: hs(w.hashrate_6h),
+      hashrate24h: hs(w.hashrate_24h),
       lastShare: Number(w.lastShare) * 1000 || null,
       sharesGood: Number(w.shares_good) || 0,
       sharesStale: Number(w.shares_stale) || 0,
@@ -187,6 +226,7 @@ function payload() {
   return {
     now: Date.now(),
     config: { rate: RATE, estWatts: EST_WATTS, pollMs: POLL_MS, wallet: WALLET, goveeEnabled: !!GOVEE_KEY },
+    rigs: RIG_CFG.rigs,
     startedAt: state.startedAt,
     lastPoll: state.lastPoll,
     nextPoll: state.nextPoll,
