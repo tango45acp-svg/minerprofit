@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Tangos Pearl Rigs</title>
+<title>Tango’s Pearl Rigs</title>
 <meta name="theme-color" content="#1c2227">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Chakra+Petch:wght@500;600;700&display=swap">
 <style>
-/* Tangos Pearl Rigs: an open-air mining frame. Gunmetal bays, aluminum rails,
+/* Tango’s Pearl Rigs: an open-air mining frame. Gunmetal bays, aluminum rails,
    blue USB risers, copper heatpipes. Status lights are the only green/amber/red. */
 :root {
   color-scheme: dark;
@@ -197,6 +197,14 @@ button { font: inherit; color: inherit; }
 .money span { font-size: .74rem; color: var(--muted); }
 .money b { font: 600 1.04rem/1.2 var(--f-display); overflow-wrap: anywhere; }
 .money small { font-size: .74rem; color: var(--faint); overflow-wrap: anywhere; }
+.money.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.money.four div:nth-child(3) { border-left: 0; }
+.money.four div:nth-child(n+3) { border-top: 1px solid var(--extrusion); }
+@media (min-width: 760px) {
+  .money.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .money.four div:nth-child(3) { border-left: 1px solid var(--extrusion); }
+  .money.four div:nth-child(n+3) { border-top: 0; }
+}
 .facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; margin: 0; }
 .facts div { display: grid; gap: 1px; min-width: 0; }
 .facts dt { font-size: .76rem; color: var(--muted); }
@@ -225,7 +233,7 @@ button { font: inherit; color: inherit; }
 .payoff { padding: 18px; display: grid; gap: 16px; min-width: 0; }
 #payoffBody { display: grid; gap: 16px; min-width: 0; }
 .payoff-top { display: grid; gap: 14px; }
-@media (min-width: 760px) { .payoff-top { grid-template-columns: .7fr 1.7fr; align-items: end; } }
+@media (min-width: 760px) { .payoff-top { grid-template-columns: .6fr 2fr; align-items: end; } }
 .payoff .pct { font: 600 clamp(2.6rem, 11vw, 3.5rem)/1 var(--f-display); color: var(--copper); letter-spacing: -.02em; }
 .payoff .pct small { font-size: .42em; margin-left: .06em; color: var(--muted); }
 .q { display: grid; }
@@ -265,7 +273,7 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
 <div class="wrap">
   <header class="top">
     <div class="brand">
-      <div class="plate"><h1>Tangos Pearl Rigs</h1></div>
+      <div class="plate"><h1>Tango’s Pearl Rigs</h1></div>
       <span class="sub" id="wallet">Connecting to HeroMiners</span>
     </div>
     <div class="chips">
@@ -280,7 +288,7 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
     <div class="readout">
       <div class="fleet">
         <span class="lab">Fleet hashrate, 6-hour pace</span>
-        <span class="big"><span id="fleetTh">0.0</span><small id="fleetUnit">TH/s</small></span>
+        <span class="big"><span id="fleetTh">0</span><small>TH/s</small></span>
         <span class="cap" id="fleetCap">Waiting for the first pool check</span>
       </div>
       <div class="netline">
@@ -298,13 +306,18 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
       <div id="payoffBody"><span class="muted">Loading</span></div>
     </section>
 
+    <section class="glass pane" id="power" aria-labelledby="h-power">
+      <div class="sect-head"><h2 id="h-power">Electricity bills</h2><span class="muted" id="powerNote"></span></div>
+      <div id="powerBody" style="display:grid;gap:12px"><span class="muted">Loading</span></div>
+    </section>
+
     <section style="display:grid;gap:12px" aria-labelledby="h-rigs">
       <div class="sect-head"><h2 id="h-rigs">Rigs</h2><span class="muted" id="rigNote"></span></div>
       <div class="rigs" id="rigs"><div class="glass rig"><span class="muted">Rigs appear after the first pool check.</span></div></div>
     </section>
 
     <section class="glass pane" aria-labelledby="h-chart">
-      <div class="sect-head"><h2 id="h-chart">Fleet hashrate, last 24 hours</h2><span class="muted" id="chartNote"></span></div>
+      <div class="sect-head"><h2 id="h-chart">Fleet hashrate in TH/s, last 24 hours</h2><span class="muted" id="chartNote"></span></div>
       <svg class="chart" id="chart" viewBox="0 0 640 220" role="img" aria-label="Fleet hashrate over the last 24 hours"></svg>
     </section>
 
@@ -356,13 +369,15 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
   const num = (v) => { if (v === '' || v == null) return null; const n = Number(v); return Number.isFinite(n) && n >= 0 ? n : null; };
 
   // ---------- formatting ----------
-  const UNITS = ['H/s', 'KH/s', 'MH/s', 'GH/s', 'TH/s', 'PH/s', 'EH/s'];
-  function hashParts(h, digits) {
-    if (h == null || !Number.isFinite(h)) return { n: '—', u: '' };
-    let i = 0; while (Math.abs(h) >= 1000 && i < UNITS.length - 1) { h /= 1000; i++; }
-    const d = digits ?? (h >= 100 ? 0 : 1);
-    return { n: h.toFixed(d), u: UNITS[i] };
+  // Pearl hashrate is quoted in TH/s, so every hashrate on the page is in TH/s (never PH/s or GH/s).
+  const TH = 1e12;
+  function thNum(h, digits) {
+    if (h == null || !Number.isFinite(h)) return '—';
+    const v = h / TH, a = Math.abs(v);
+    const d = digits ?? (a >= 100 ? 0 : a >= 10 ? 1 : 2);
+    return v.toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d });
   }
+  function hashParts(h, digits) { const n = thNum(h, digits); return { n, u: n === '—' ? '' : 'TH/s' }; }
   const hashStr = (h, d) => { const p = hashParts(h, d); return p.u ? `${p.n} ${p.u}` : p.n; };
   const usd = (v, d = 2) => (v == null || !Number.isFinite(v) ? '—' : `${v < 0 ? '−' : ''}$${Math.abs(v).toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d })}`);
   const prl = (v, d = 2) => (v == null || !Number.isFinite(v) ? '—' : v.toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d }));
@@ -451,15 +466,18 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
     const bal = Number(P.safetradeBalance?.usdt) || 0;
     const sent = (P.cashouts || []).reduce((a, c) => a + (Number(c.usdt) || 0), 0);
     const cashed = sent + bal;
+    const bills = P.electricBills || [];
+    const power = bills.reduce((a, b) => a + (Number(b.mining ?? b.amount) || 0), 0);   // electricity is an expense
+    const avail = cashed - power;
     const now = Date.now();
-    let credit = cashed, cum = 0;
+    let credit = avail, cum = 0;
     const queue = (P.cards || []).filter((c) => !c.paid).map((c) => {
       const cost = Number(c.cost) || 0;
       const applied = Math.min(cost, Math.max(0, credit));
       credit -= applied;
       cum += cost;
       const left = cost - applied;
-      const days = left > 0 && net > 0 ? (cum - cashed) / net : null;
+      const days = left > 0 && net > 0 ? (cum - avail) / net : null;
       return { ...c, cost, applied, left, pct: cost ? applied / cost : 1, days, eta: days != null ? now + days * 864e5 : null };
     });
     const first = queue.find((q) => q.left > 0);
@@ -480,7 +498,7 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
     }
     return {
       queue, paidCards: (P.cards || []).filter((c) => c.paid), cashouts: P.cashouts || [], balance: P.safetradeBalance,
-      sent, bal, cashed, total, left, net,
+      sent, bal, cashed, bills, power, avail, total, left, net,
       ordered: queue.filter((q) => q.status === 'ordered').reduce((a, q) => a + q.left, 0),
       pct: total ? (total - left) / total : 1,
       allEta: last ? last.eta : now, allDays: last ? last.days : 0, byRig,
@@ -545,10 +563,7 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
     Rack.set(M);
 
     // hero
-    const unit = hashParts(F.pace).u || 'TH/s';
-    const div = 1000 ** UNITS.indexOf(unit);
-    tween($('fleetTh'), 'th', F.pace / div, (v) => v.toFixed(1));
-    $('fleetUnit').textContent = unit;
+    tween($('fleetTh'), 'th', F.pace / TH, (v) => thNum(v * TH));
     $('fleetCap').textContent = `Right now ${hashStr(pool.hashrate)}, 24h average ${hashStr(pool.hashrate24h)}. Network ${hashStr(pool.network?.hashrate)}.`;
     tween($('netDay'), 'net', F.netDay ?? 0, (v) => usd(v));
     $('netWrap').className = `v ${F.netDay == null ? '' : F.netDay >= 0 ? 'pos' : 'neg'}`;
@@ -564,6 +579,7 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
       <div class="cell"><span class="lab">Left to pay off</span><span class="v">${usd(M.payoff.left, 0)}</span><span class="s">${M.payoff.left <= 0 ? 'Every GPU is paid off' : M.payoff.allEta ? `All GPUs paid off ${day(M.payoff.allEta)}` : 'No payoff at today’s net'}</span></div>`;
 
     renderPayoff(M.payoff);
+    renderPower(M);
     renderRigs(M);
     renderChart();
     renderPay();
@@ -595,10 +611,11 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
         <div style="display:grid;gap:6px">
           <span class="muted" style="font-size:.85rem">Paid off so far</span>
           <span class="pct">${Math.floor(P.pct * 100)}<small>%</small></span>
-          <span class="muted" style="font-size:.85rem">${usd(P.cashed, 0)} cashed out toward ${usd(P.total, 0)} of GPUs</span>
+          <span class="muted" style="font-size:.85rem">${usd(P.cashed, 0)} cashed out${P.power ? `, minus ${usd(P.power, 0)} of electricity,` : ''} toward ${usd(P.total, 0)} of GPUs</span>
         </div>
-        <div class="money">
+        <div class="money four">
           <div><span>Cashed out</span><b>${usd(P.cashed, 0)}</b><small>${usd(P.sent, 0)} to wallet, ${usd(P.bal, 0)} on SafeTrade</small></div>
+          <div><span>Electricity paid</span><b>${usd(P.power, 0)}</b><small>${P.bills.length ? `${P.bills.length} bill${P.bills.length > 1 ? 's' : ''} so far` : 'no bills sent yet'}</small></div>
           <div><span>Left to pay</span><b>${usd(P.left, 0)}</b><small>${P.ordered ? `${usd(P.ordered, 0)} is cards on order` : 'nothing on order'}</small></div>
           <div><span>All paid off</span><b>${P.left <= 0 ? 'Done' : P.allEta ? day(P.allEta) : '—'}</b><small>${P.left <= 0 ? '' : P.allDays != null ? `${Math.round(P.allDays)} days at today’s net` : 'not at today’s net'}</small></div>
         </div>
@@ -607,7 +624,28 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
       <div class="q">${rows}</div>
       ${paid ? `<p class="muted" style="font-size:.82rem">Already paid off before this tracker: ${paid}.</p>` : ''}
       <details class="cash"><summary>Cash-outs from selling Pearl (${P.cashouts.length + (P.balance ? 1 : 0)})</summary><div class="rows">${balRow}${cash}</div></details>
-      <p class="note">Cashed out is the USDT you got selling Pearl on SafeTrade, counting 1 USDT as $1. Pearl you still hold isn’t counted. Dates move with live hashrate, difficulty, PRL price and power, and leave out cards on order until they’re mining.</p>`;
+      <p class="note">Cashed out is the USDT you got selling Pearl on SafeTrade, counting 1 USDT as $1. Pearl you still hold isn’t counted. Electricity bills are an expense, so they come off the cash before it pays down GPUs. Dates move with live hashrate, difficulty, PRL price and power, and leave out cards on order until they’re mining.</p>`;
+  }
+
+  function renderPower(M) {
+    const P = M.payoff;
+    const bills = [...P.bills].sort((a, b) => (a.month < b.month ? 1 : -1));
+    const est = M.fleet.powerDay * 30.44;
+    const month = (m) => new Date(`${m}-15T12:00:00`).toLocaleDateString([], { month: 'long', year: 'numeric' });
+    $('powerNote').textContent = `Your rigs use about ${usd(est, 0)} a month at ${usd(M.rate, 3)}/kWh`;
+    if (!bills.length) {
+      $('powerBody').innerHTML = '<p class="muted">No bills yet. Send Claude each month’s electric bill and it shows up here, counted as a mining expense.</p>';
+      return;
+    }
+    const last = bills[0];
+    const rows = bills.map((b) => `<div class="row"><span class="l">${month(b.month)}${b.mining != null ? ` <span class="faint">${usd(Number(b.mining))} of it mining</span>` : ''}</span><span class="r">${usd(Number(b.amount))}</span></div>`).join('');
+    $('powerBody').innerHTML = `
+      <div class="money">
+        <div><span>Last bill</span><b>${usd(Number(last.amount), 0)}</b><small>${month(last.month)}</small></div>
+        <div><span>Counted as expense</span><b>${usd(P.power, 0)}</b><small>${bills.length} bill${bills.length > 1 ? 's' : ''} in total</small></div>
+        <div><span>Rigs’ estimate</span><b>${usd(est, 0)}</b><small>a month at today’s draw</small></div>
+      </div>
+      <div class="rows">${rows}</div>`;
   }
 
   function renderErrors() {
@@ -697,7 +735,7 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
     for (let i = 0; i <= 4; i++) {
       const v = (hMax / 4) * i, yy = y(v).toFixed(1);
       g += `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" stroke="rgba(195,203,211,.09)"/>`;
-      g += `<text x="${L - 8}" y="${+yy + 4}" text-anchor="end">${i ? hashStr(v, 0) : '0'}</text>`;
+      g += `<text x="${L - 8}" y="${+yy + 4}" text-anchor="end">${i ? thNum(v, 0) : '0'}</text>`;
     }
     const span = t1 - t0, step = span > 12 * 3600e3 ? 6 * 3600e3 : 3 * 3600e3;
     for (let tt = Math.ceil(t0 / step) * step; tt <= t1; tt += step) {

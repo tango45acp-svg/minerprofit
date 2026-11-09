@@ -34,10 +34,11 @@ function loadPayoff() {
       cards: Array.isArray(cfg.cards) ? cfg.cards : [],
       cashouts: Array.isArray(cfg.cashouts) ? cfg.cashouts : [],
       safetradeBalance: cfg.safetradeBalance || null,
+      electricBills: Array.isArray(cfg.electricBills) ? cfg.electricBills : [],
     };
   } catch (e) {
     console.error('payoff.json unreadable:', e.message);
-    return { cards: [], cashouts: [], safetradeBalance: null };
+    return { cards: [], cashouts: [], safetradeBalance: null, electricBills: [] };
   }
 }
 const PAYOFF = loadPayoff();

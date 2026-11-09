@@ -1,21 +1,102 @@
 {
-  "_note": "What the GPUs cost and the cash Pearl has turned into. Cards are paid off top to bottom with every dollar cashed out. status: 'mining' or 'ordered'. paid: true = already paid off before this tracker. Cash-outs are USDT from selling PRL on SafeTrade (1 USDT counted as $1). Update safetradeBalance and add a cashouts row each time you withdraw.",
+  "_note": "What the GPUs cost and the cash Pearl has turned into. Cards are paid off top to bottom with every dollar cashed out. status: 'mining' or 'ordered'. paid: true = already paid off before this tracker. Cash-outs are USDT from selling PRL on SafeTrade (1 USDT counted as $1). Update safetradeBalance and add a cashouts row each time you withdraw. electricBills: one row per monthly electric bill, { month: 'YYYY-MM', amount: total bill in $, mining: optional $ of it that's the rigs }. Bills are an expense: they come off the cash before it pays down GPUs (the 'mining' part if given, else the whole bill).",
   "cards": [
-    { "id": "4090", "card": "RTX 4090", "rig": "rig-4090", "cost": 1600, "status": "mining" },
-    { "id": "5070ti-a", "card": "RTX 5070 Ti", "rig": "rig-4080s-5070ti", "cost": 1000, "status": "mining" },
-    { "id": "5070ti-b", "card": "RTX 5070 Ti", "rig": "rig-5070ti", "cost": 1200, "status": "mining" },
-    { "id": "5060ti", "card": "RTX 5060 Ti", "rig": "rig-5060ti-2070s", "cost": 800, "status": "mining" },
-    { "id": "5060", "card": "RTX 5060", "rig": null, "cost": 350, "status": "ordered" },
-    { "id": "2080", "card": "RTX 2080", "rig": null, "cost": 260, "status": "ordered" },
-    { "id": "2070s-b", "card": "RTX 2070 Super", "rig": null, "cost": 0, "status": "ordered", "note": "free" },
-    { "id": "4080s", "card": "RTX 4080 Super", "rig": "rig-4080s-5070ti", "cost": null, "status": "mining", "paid": true },
-    { "id": "2070s-a", "card": "RTX 2070 Super", "rig": "rig-5060ti-2070s", "cost": null, "status": "mining", "paid": true }
+    {
+      "id": "4090",
+      "card": "RTX 4090",
+      "rig": "rig-4090",
+      "cost": 1600,
+      "status": "mining"
+    },
+    {
+      "id": "5070ti-a",
+      "card": "RTX 5070 Ti",
+      "rig": "rig-4080s-5070ti",
+      "cost": 1000,
+      "status": "mining"
+    },
+    {
+      "id": "5070ti-b",
+      "card": "RTX 5070 Ti",
+      "rig": "rig-5070ti",
+      "cost": 1200,
+      "status": "mining"
+    },
+    {
+      "id": "5060ti",
+      "card": "RTX 5060 Ti",
+      "rig": "rig-5060ti-2070s",
+      "cost": 800,
+      "status": "mining"
+    },
+    {
+      "id": "5060",
+      "card": "RTX 5060",
+      "rig": null,
+      "cost": 350,
+      "status": "ordered"
+    },
+    {
+      "id": "2080",
+      "card": "RTX 2080",
+      "rig": null,
+      "cost": 260,
+      "status": "ordered"
+    },
+    {
+      "id": "2070s-b",
+      "card": "RTX 2070 Super",
+      "rig": null,
+      "cost": 0,
+      "status": "ordered",
+      "note": "free"
+    },
+    {
+      "id": "4080s",
+      "card": "RTX 4080 Super",
+      "rig": "rig-4080s-5070ti",
+      "cost": null,
+      "status": "mining",
+      "paid": true
+    },
+    {
+      "id": "2070s-a",
+      "card": "RTX 2070 Super",
+      "rig": "rig-5060ti-2070s",
+      "cost": null,
+      "status": "mining",
+      "paid": true
+    }
   ],
   "cashouts": [
-    { "date": "2026-06-08", "network": "Solana", "usdt": 135.516063, "fee": 1 },
-    { "date": "2026-06-30", "network": "Solana", "usdt": 170.761581, "fee": 1 },
-    { "date": "2026-08-29", "network": "Ethereum", "usdt": 69.161162, "fee": 3 },
-    { "date": "2026-10-20", "network": "Solana", "usdt": 363.937346, "fee": 1 }
+    {
+      "date": "2026-06-08",
+      "network": "Solana",
+      "usdt": 135.516063,
+      "fee": 1
+    },
+    {
+      "date": "2026-06-30",
+      "network": "Solana",
+      "usdt": 170.761581,
+      "fee": 1
+    },
+    {
+      "date": "2026-08-29",
+      "network": "Ethereum",
+      "usdt": 69.161162,
+      "fee": 3
+    },
+    {
+      "date": "2026-10-20",
+      "network": "Solana",
+      "usdt": 363.937346,
+      "fee": 1
+    }
   ],
-  "safetradeBalance": { "asOf": "2026-11-08", "usdt": 409.956747 }
+  "safetradeBalance": {
+    "asOf": "2026-11-08",
+    "usdt": 409.956747
+  },
+  "electricBills": []
 }

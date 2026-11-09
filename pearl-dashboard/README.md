@@ -10,6 +10,10 @@ A small, dependency-free Node server that checks HeroMiners and Govee every 5 mi
 
 **GPU payoff.** `payoff.json` lists every GPU's cost in payoff order (cards marked `paid` were paid off before the tracker; `ordered` ones aren't mining yet), each SafeTrade withdrawal of USDT from selling Pearl, and the USDT still on SafeTrade. Every dollar cashed out pays off the cards top to bottom; the dates use the fleet's live net a day. Add a `cashouts` row and update `safetradeBalance` after each withdrawal, then redeploy.
 
+**Electricity.** `electricBills` in `payoff.json` holds one row per monthly electric bill: `{ "month": "2026-11", "amount": 182.40 }`, plus an optional `"mining"` dollar amount if only part of the bill should count. Bills are an expense: they come off the cash before it pays down GPUs. Future payoff dates already subtract estimated power from the live earnings.
+
+**Units.** Every hashrate on the page is in TH/s, the unit Pearl uses.
+
 - `/` — the dashboard
 - `/api/data` — the latest pool, plug and history data as JSON
 - `/api/govee-debug` — exactly what Govee returns for each plug (no key shown)
