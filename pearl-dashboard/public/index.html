@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Tango’s Pearl Rigs</title>
 <meta name="theme-color" content="#1c2227">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="same-origin">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231c2227'/%3E%3Ccircle cx='16' cy='16' r='10' fill='%230a0d10' stroke='%234f8dff' stroke-width='2.5'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23c3cbd3'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Chakra+Petch:wght@500;600;700&display=swap">
@@ -41,7 +44,7 @@ body {
 .wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 22px; }
 h1, h2, h3 { margin: 0; font-family: var(--f-display); font-weight: 600; text-wrap: balance; }
 h2 { font-size: 1.08rem; }
-h3 { font-size: 1.02rem; line-height: 1.25; }
+h3 { font-size: 1.02rem; line-height: 1.25; overflow-wrap: anywhere; }
 p { margin: 0; }
 a { color: var(--riser); }
 button { font: inherit; color: inherit; }
@@ -81,22 +84,19 @@ button { font: inherit; color: inherit; }
 .btn:disabled { opacity: .55; cursor: default; }
 .btn.quiet { background: var(--bay); color: var(--ink); border: 1px solid var(--extrusion); }
 
-/* ---------- the rack ---------- */
-.hero { display: grid; gap: 18px; align-items: center; }
-@media (min-width: 900px) { .hero { grid-template-columns: 1.5fr 1fr; gap: 28px; } }
-.rack { position: relative; padding: 4px 22px 9px; border-radius: var(--r); background: #181d22; border: 1px solid #2b333b; }
-.rack::before, .rack::after {
-  content: ""; position: absolute; top: -1px; bottom: -1px; width: 12px;
-  background: linear-gradient(90deg, #47515b, #bcc5ce 35%, #8b96a1 56%, #3d464f);
+/* ---------- the rigs: one open-air frame per rig, real cards on risers ---------- */
+.hero { display: grid; gap: 20px; }
+.rack { min-width: 0; }
+.shelves { display: grid; gap: 18px 20px; }
+@media (min-width: 900px) {
+  .shelves { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .shelves > .wide { grid-column: 1 / -1; }
 }
-.rack::before { left: -1px; border-radius: var(--r) 0 0 var(--r); }
-.rack::after { right: -1px; border-radius: 0 var(--r) var(--r) 0; }
-.shelves { display: grid; gap: 2px; }
 .shelves > p { padding: 28px 4px; }
-.shelf { display: block; color: inherit; text-decoration: none; padding: 12px 4px 0; border-radius: 4px; }
-.shelf-head { display: flex; align-items: center; gap: 9px; }
+.shelf { display: block; color: inherit; text-decoration: none; border-radius: 4px; min-width: 0; padding-bottom: 6px; }
+.shelf-head { display: flex; align-items: center; gap: 9px; padding: 0 2px; }
 .shelf-head b { font: 600 .98rem/1.2 var(--f-display); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.shelf:hover .shelf-head b { color: var(--c); }
+a.shelf:hover .shelf-head b { color: var(--c); }
 .shelf-head .hr { margin-left: auto; font: 600 1.08rem/1 var(--f-display); color: var(--c); white-space: nowrap; }
 .shelf-head .hr small { font: 500 .74rem var(--f-body); color: var(--muted); margin-left: 4px; }
 .shelf.off .shelf-head .hr { color: var(--bad); font-size: .9rem; }
@@ -104,35 +104,53 @@ button { font: inherit; color: inherit; }
 .led.good { background: var(--good); box-shadow: 0 0 9px var(--good); }
 .led.warn { background: var(--warn); box-shadow: 0 0 9px var(--warn); }
 .led.bad, .led.missing { background: var(--bad); box-shadow: 0 0 9px var(--bad); }
-.cards { display: flex; gap: 8px; margin-top: 9px; }
-.gpu { flex: 1 1 0; min-width: 0; max-width: 360px; position: relative; padding-bottom: 10px; }
-.gpu::after { /* the riser cable down to the rail */
-  content: ""; position: absolute; left: 50%; bottom: 0; width: 3px; height: 10px; margin-left: -1.5px; border-radius: 1px; background: var(--riser);
+
+/* the frame: two aluminum posts, a top bar, and the rail the risers sit on */
+.frame { position: relative; display: block; margin-top: 9px; padding: 0 12px; background: linear-gradient(180deg, #161b20, #12161a); border-radius: 3px; }
+.frame::before, .frame::after {
+  content: ""; position: absolute; z-index: 2; top: 0; bottom: -6px; width: 11px; border-radius: 2px 2px 1px 1px;
+  background: linear-gradient(90deg, #47515b, #c6ced6 32%, #8b96a1 58%, #3d464f);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, .4);
 }
-.shroud {
-  position: relative; display: flex; justify-content: space-evenly; align-items: center; gap: 3%;
-  padding: 9px 8px 21px; border-radius: 5px; border: 1px solid #46515c;
-  background: linear-gradient(180deg, #353e47, #262d34);
-  box-shadow: inset 0 2px 0 var(--c), inset 0 -12px 18px rgba(0, 0, 0, .25);
+.frame::before { left: 0; } .frame::after { right: 0; }
+.topbar { display: block; height: 7px; margin: 0 -12px; background: linear-gradient(180deg, #cfd6dd, #8a95a0 55%, #56606a); }
+.bay { display: flex; justify-content: center; align-items: flex-end; padding-top: 5px; }
+.bay svg { display: block; flex: 0 1 auto; min-width: 0; height: auto; overflow: visible; }
+.rail {
+  display: flex; justify-content: center; align-items: center; min-height: 19px; margin: 0 -12px; padding: 0 12px;
+  background: linear-gradient(180deg, #d0d7de, #99a4ae 30%, #6c7782 31%, #7f8a95 62%, #4c5660);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .4);
 }
-.shelf.off .shroud { box-shadow: inset 0 2px 0 #4a545e, inset 0 -12px 18px rgba(0, 0, 0, .25); }
-.fan { flex: 0 1 58px; aspect-ratio: 1; border-radius: 50%; position: relative; background: radial-gradient(circle, #12161a 0 64%, #4c5660 65% 69%, #1b2025 70%); }
-.fan i {
-  position: absolute; inset: 9%; border-radius: 50%;
-  background:
-    radial-gradient(circle, #5d6771 0 16%, #1b2025 17% 21%, transparent 22%),
-    repeating-conic-gradient(#8f9aa5 0deg 20deg, transparent 20deg 40deg);
-}
-.shelf.off .fan i { opacity: .55; }
+.rail .slot { flex: 0 1 auto; min-width: 0; display: flex; justify-content: center; }
+.lbl { font: 600 .62rem/1 var(--f-display); color: #e9edf0; background: #14181c; border-radius: 2px; padding: 3px 5px 2px; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.lbl.w { color: #c3cbd3; padding-inline: 4px; overflow: visible; }
+
+/* card parts that follow the rig's state */
+.strip { fill: none; stroke: var(--c); stroke-width: 2.6; stroke-linecap: round; filter: drop-shadow(0 0 3px var(--c)); }
+.hub { fill: none; stroke: var(--c); stroke-width: 1.6; opacity: .9; }
+.cable { fill: none; stroke: #07090b; stroke-width: 6; stroke-linecap: round; }
+.braid { fill: none; stroke: #20262c; stroke-width: 4; stroke-dasharray: 2 2.6; }
+.usb { fill: none; stroke: var(--riser); stroke-width: 4.5; }
+.pled { fill: var(--faint); }
+.shelf.good .pled { fill: var(--good); } .shelf.warn .pled { fill: var(--warn); } .shelf.bad .pled, .shelf.missing .pled { fill: var(--bad); }
+.shelf.off .strip { stroke: #4a545e; filter: none; }
+.shelf.off .hub { stroke: #4a545e; }
+.shelf.off .bay { opacity: .72; }
+.spin { transform-box: fill-box; transform-origin: center; }
 @media (prefers-reduced-motion: no-preference) {
-  .fan i { animation: spin var(--spin, 0s) linear infinite; }
-  .shelf.off .fan i { animation: none; }
+  .spin { animation: spin var(--spin, 0s) linear infinite; }
+  .shelf.off .spin { animation: none; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-.model { position: absolute; right: 8px; bottom: 5px; font: 600 .66rem/1 var(--f-display); color: #a3adb7; white-space: nowrap; }
-.rail { display: block; height: 7px; margin: 0 -26px; background: linear-gradient(180deg, #c6ced6, #7c8792 55%, #535d67); box-shadow: 0 2px 4px rgba(0, 0, 0, .35); }
 
-/* the one orchestrated moment: shelves power on top to bottom */
+/* cards that are bought but not mining yet: still in the box */
+.dock .boxes { display: flex; gap: 10px; margin-top: 9px; padding: 12px 12px 10px; border: 1px dashed var(--extrusion); border-radius: 4px; }
+.box { flex: 1 1 0; min-width: 0; max-width: 170px; display: grid; gap: 5px; justify-items: center; text-align: center; }
+.box svg { display: block; width: min(100%, 92px); height: auto; }
+.box b { font: 600 .74rem/1.2 var(--f-display); overflow-wrap: anywhere; }
+.box small { font-size: .7rem; color: var(--faint); }
+
+/* the one orchestrated moment: rigs power on one after another */
 @media (prefers-reduced-motion: no-preference) {
   .power .shelf { animation: powerOn .55s ease-out both; animation-delay: calc(var(--i, 0) * 170ms + 120ms); }
   .power .shelf .led { animation: ledOn .55s steps(1, end) both; animation-delay: calc(var(--i, 0) * 170ms + 260ms); }
@@ -142,6 +160,10 @@ button { font: inherit; color: inherit; }
 
 /* ---------- readout ---------- */
 .readout { display: grid; gap: 16px; align-content: center; }
+@media (min-width: 900px) {
+  .readout { grid-template-columns: 1fr 1fr; gap: 28px; align-items: end; }
+  .readout .netline { border-top: 0; padding-top: 0; border-left: 1px solid var(--extrusion); padding-left: 28px; }
+}
 .fleet { display: grid; gap: 4px; }
 .fleet .lab, .fleet .cap, .netline .s { font-size: .86rem; color: var(--muted); }
 .big { font: 600 clamp(2.8rem, 12vw, 4.1rem)/1 var(--f-display); letter-spacing: -.02em; }
@@ -176,6 +198,7 @@ button { font: inherit; color: inherit; }
 .rig.unassigned { --c: var(--faint); }
 .rig-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
 .rig-id { display: flex; gap: 10px; align-items: flex-start; min-width: 0; }
+.rig-head > div { min-width: 0; }
 .rig-id svg { flex: none; }
 .gpus { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
 .gpus span { font: 500 .74rem var(--f-display); color: var(--muted); background: var(--bay-2); border: 1px solid var(--extrusion); border-radius: 3px; padding: 1px 6px; }
@@ -270,6 +293,15 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
 </style>
 </head>
 <body class="power">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <linearGradient id="g-metal" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#e4e9ed"/><stop offset=".5" stop-color="#aab4be"/><stop offset="1" stop-color="#76818c"/></linearGradient>
+  <linearGradient id="g-shroud" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#46505a"/><stop offset=".45" stop-color="#2c343b"/><stop offset="1" stop-color="#1c2227"/></linearGradient>
+  <linearGradient id="g-shroud-old" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#b4bdc6"/><stop offset=".5" stop-color="#848f9a"/><stop offset="1" stop-color="#5a646e"/></linearGradient>
+  <linearGradient id="g-blade" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#aab4be"/><stop offset="1" stop-color="#56606a"/></linearGradient>
+  <pattern id="p-fins" width="4.2" height="8" patternUnits="userSpaceOnUse"><rect width="4.2" height="8" fill="#0c0f12"/><rect width="1.5" height="8" fill="#49535d"/></pattern>
+  <pattern id="p-gold" width="3" height="9" patternUnits="userSpaceOnUse"><rect width="3" height="9" fill="#d8a94a"/><rect x="2.2" width=".8" height="9" fill="#6f5216"/></pattern>
+  <g id="gf"><circle r="38" fill="none"/><path d="M2,-11 C10,-24 26,-34 35.5,-9 C27,-18 14,-14 9,-6 Z" transform="rotate(0)" fill="url(#g-blade)" stroke="#14181c" stroke-width=".8"/><path d="M2,-11 C10,-24 26,-34 35.5,-9 C27,-18 14,-14 9,-6 Z" transform="rotate(40)" fill="url(#g-blade)" stroke="#14181c" stroke-width=".8"/><path d="M2,-11 C10,-24 26,-34 35.5,-9 C27,-18 14,-14 9,-6 Z" transform="rotate(80)" fill="url(#g-blade)" stroke="#14181c" stroke-width=".8"/><path d="M2,-11 C10,-24 26,-34 35.5,-9 C27,-18 14,-14 9,-6 Z" transform="rotate(120)" fill="url(#g-blade)" stroke="#14181c" stroke-width=".8"/><path d="M2,-11 C10,-24 26,-34 35.5,-9 C27,-18 14,-14 9,-6 Z" transform="rotate(160)" fill="url(#g-blade)" stroke="#14181c" stroke-width=".8"/><path d="M2,-11 C10,-24 26,-34 35.5,-9 C27,-18 14,-14 9,-6 Z" transform="rotate(200)" fill="url(#g-blade)" stroke="#14181c" stroke-width=".8"/><path d="M2,-11 C10,-24 26,-34 35.5,-9 C27,-18 14,-14 9,-6 Z" transform="rotate(240)" fill="url(#g-blade)" stroke="#14181c" stroke-width=".8"/><path d="M2,-11 C10,-24 26,-34 35.5,-9 C27,-18 14,-14 9,-6 Z" transform="rotate(280)" fill="url(#g-blade)" stroke="#14181c" stroke-width=".8"/><path d="M2,-11 C10,-24 26,-34 35.5,-9 C27,-18 14,-14 9,-6 Z" transform="rotate(320)" fill="url(#g-blade)" stroke="#14181c" stroke-width=".8"/></g>
+</defs></svg>
 <div class="wrap">
   <header class="top">
     <div class="brand">
@@ -347,6 +379,7 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
     <footer>
       <span id="foot">The server checks the pool every 5 minutes.</span>
       <span id="errs"></span>
+      <form id="signout" method="post" action="/logout" hidden><button class="btn quiet" type="submit">Sign out</button></form>
     </footer>
   </div>
 </div>
@@ -391,7 +424,6 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
     return `${Math.round(h / 24)} days ago`;
   }
   const day = (t) => (t == null || !Number.isFinite(t) ? '—' : new Date(t).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }));
-  const shortAddr = (a) => (a && a.length > 20 ? `${a.slice(0, 8)}…${a.slice(-6)}` : a || '');
 
   // ---------- the money model ----------
   const rate = () => num(S.rate) || data.config.rate;
@@ -520,22 +552,92 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
     requestAnimationFrame(step);
   }
 
-  // ---------- the rack: one shelf per rig, fans spin faster with more hashrate ----------
+  // ---------- the rigs: each one drawn as an open-air frame with its real cards ----------
+  // Every card is drawn to the same scale: three-fan cards are longer than two-fan ones,
+  // each sits on a riser with a USB lead, and the rig's power supply shows its watts.
+  // Fans spin faster on the rigs with more hashrate and stop when a rig is offline.
   const Rack = (() => {
     const el = $('rack');
     let key = '';
     const fansFor = (g) => (/4090|4080|5090|5080|5070 Ti|4070 Ti|3090|3080/i.test(g) ? 3 : 2);
+    const isOld = (g) => /\b(GTX|RTX 20)|\b(16[56]0|10[5-8]0)\b/i.test(g);
+    const GAP = 10, PSU_W = 76, FULL = 300 + GAP + 300 + GAP + PSU_W + 14;   // a two-card rig fills the frame
+    const cardW = (g) => (fansFor(g) === 3 ? 300 : 230);
+
+    const fan = (cx) => `<g transform="translate(${cx} 60)"><circle r="41" fill="#0a0d10" stroke="#5b6671" stroke-width="2"/><g class="spin"><use href="#gf"/></g><circle r="11.5" fill="#1b2025" stroke="#66717c" stroke-width="1.2"/><circle class="hub" r="6.2"/><circle r="2" fill="#0a0d10"/></g>`;
+
+    function cardSVG(g, style) {
+      const three = fansFor(g) === 3, old = isOld(g);
+      const W = cardW(g), E = W - 16, plug = E - 70;   // E: where the shroud ends
+      const cable = `M${plug} 6 C${plug} -17 ${W - 8} -19 ${W - 8} 18 V150`;
+      return `<svg viewBox="0 -14 ${W} 164" style="${style}" aria-hidden="true" focusable="false">
+        <path class="cable" d="${cable}"/><path class="braid" d="${cable}"/>
+        <path class="usb" d="M185 140 V150"/>
+        <rect x="26" y="134" width="180" height="9.5" rx="1.5" fill="#0e3f7a"/>
+        <rect x="34" y="127" width="164" height="8" rx="1" fill="#090b0d"/>
+        <rect x="176" y="135.5" width="18" height="7.5" rx="1" fill="#c3cbd3"/>
+        <circle cx="44" cy="138.7" r="2.7" fill="#161b20"/><circle cx="55" cy="138.7" r="2.7" fill="#161b20"/><rect x="66" y="136.5" width="9" height="4.5" fill="#161b20"/>
+        <rect x="8" y="106" width="${E - 4}" height="16" rx="1" fill="#0b1411"/>
+        <rect x="40" y="120" width="20" height="9" fill="url(#p-gold)"/><rect x="66" y="120" width="126" height="9" fill="url(#p-gold)"/>
+        <rect x="0" y="-8" width="9" height="140" rx="1.5" fill="url(#g-metal)"/><rect x="0" y="-8" width="22" height="5.5" rx="1.5" fill="url(#g-metal)"/><circle cx="16" cy="-5.2" r="1.6" fill="#3a454f"/>
+        <rect x="2.5" y="20" width="4" height="15" rx="1" fill="#14181c"/><rect x="2.5" y="42" width="4" height="15" rx="1" fill="#14181c"/><rect x="2.5" y="64" width="4" height="15" rx="1" fill="#14181c"/><rect x="2.5" y="86" width="4" height="10" rx="1" fill="#14181c"/>
+        <path d="M18 8 H${E - 14} L${E} 22 V98 L${E - 12} 112 H18 L12 106 V14 Z" fill="url(#${old ? 'g-shroud-old' : 'g-shroud'})" stroke="${old ? '#c9d0d7' : '#5a6570'}" stroke-width="1.2"/>
+        <path d="M24 104 L34 112 M${E - 30} 8 L${E} 34" fill="none" stroke="${old ? '#4c5660' : '#6f7a85'}" stroke-opacity=".55"/>
+        <rect x="20" y="16" width="${E - 28}" height="88" rx="44" fill="url(#p-fins)"/>
+        <path class="strip" d="M36 11.6 H${E - 34}"/>
+        ${(three ? [62, 148, 234] : [64, 162]).map(fan).join('')}
+        <rect x="${plug - 12}" y="2" width="24" height="7.5" rx="1.5" fill="#090b0d" stroke="#3a454f" stroke-width=".8"/>
+      </svg>`;
+    }
+
+    function psuSVG(style) {
+      const lead1 = 'M24 55 C24 28 0 20 -18 20', lead2 = 'M34 55 C34 42 4 35 -18 35';
+      return `<svg viewBox="0 -14 ${PSU_W} 164" style="${style}" aria-hidden="true" focusable="false">
+        <path class="cable" d="${lead1}"/><path class="braid" d="${lead1}"/><path class="cable" d="${lead2}"/><path class="braid" d="${lead2}"/>
+        <rect x="3" y="54" width="70" height="96" rx="3" fill="#15191d" stroke="#4a5560" stroke-width="1.5"/>
+        <rect x="8" y="59" width="60" height="6" rx="1" fill="#2a323a"/>
+        <circle cx="38" cy="103" r="27" fill="#0a0d10" stroke="#46515c" stroke-width="1.5"/>
+        <g fill="none" stroke="#46515c" stroke-width="1.3"><circle cx="38" cy="103" r="20.5"/><circle cx="38" cy="103" r="14"/><circle cx="38" cy="103" r="7.5"/><path d="M38 76 V130 M11 103 H65 M19 84 L57 122 M57 84 L19 122"/></g>
+        <circle class="pled" cx="13" cy="141" r="2.8"/>
+        <rect x="52" y="136" width="14" height="9" rx="1.5" fill="#0a0d10" stroke="#4a5560"/>
+      </svg>`;
+    }
+
+    const boxSVG = '<svg viewBox="0 0 96 70" aria-hidden="true" focusable="false"><path d="M6 20 L48 8 L90 20 L48 32 Z" fill="#c9965f"/><path d="M6 20 V54 L48 66 V32 Z" fill="#a8794d"/><path d="M90 20 V54 L48 66 V32 Z" fill="#8c6440"/><path d="M27 14 L69 26 V38 L61 36 V28.3 L19 16.3 Z" fill="#e6d3ad" fill-opacity=".9"/></svg>';
+
+    function rigHTML(r, i, wide, speed) {
+      const gpus = r.gpus.length ? r.gpus : ['GPU'];
+      const units = gpus.reduce((a, g) => a + cardW(g) + GAP, 0) + PSU_W;
+      const pct = 100 / Math.max(FULL, units);   // percent of the frame per drawing unit
+      const size = (w, first) => `width:${(w * pct).toFixed(2)}%${first ? '' : `;margin-left:${(GAP * pct).toFixed(2)}%`}`;
+      const short = gpus.length > 2;
+      const cards = gpus.map((g, n) => cardSVG(g, size(cardW(g), n === 0))).join('');
+      const labels = gpus.map((g, n) => `<span class="slot" style="${size(cardW(g), n === 0)}"><span class="lbl">${esc(short ? g.replace(/^(RTX|GTX)\s+/i, '') : g)}</span></span>`).join('');
+      const watts = r.watts != null ? `${Math.round(r.watts)} W` : 'PSU';
+      return `<a class="shelf ${r.state}${r.online ? '' : ' off'}${wide ? ' wide' : ''}" href="#rig-${esc(r.id)}" data-id="${esc(r.id)}" style="--c:${r.color};--spin:${speed}s;--i:${i}">
+        <span class="shelf-head"><span class="led ${r.state}"></span><b>${esc(r.name)}</b><span class="hr" data-hr></span></span>
+        <span class="frame" aria-hidden="true">
+          <span class="topbar"></span>
+          <span class="bay">${cards}${psuSVG(size(PSU_W, false))}</span>
+          <span class="rail">${labels}<span class="slot" style="${size(PSU_W, false)}"><span class="lbl w">${watts}</span></span></span>
+        </span>
+      </a>`;
+    }
+
     function set(M) {
       const top = Math.max(0, ...M.rigs.map((r) => r.pace || 0));
-      const speed = (r) => (r.online && top ? (0.28 + 1.1 * (1 - r.pace / top)).toFixed(2) : '0');
-      const sig = JSON.stringify(M.rigs.map((r) => [r.id, r.name, r.gpus, r.state, r.color, speed(r)]));
+      const speed = (r) => (r.online && top ? (0.3 + 1.1 * (1 - r.pace / top)).toFixed(2) : '0');
+      const ordered = M.payoff.queue.filter((q) => q.status === 'ordered');
+      const sig = JSON.stringify([M.rigs.map((r) => [r.id, r.name, r.gpus, r.state, r.color, speed(r), r.watts]), ordered.map((q) => [q.card, q.cost])]);
       if (sig !== key) {   // rebuild only when something visible changes, so fans don't restart every minute
         key = sig;
-        el.innerHTML = M.rigs.map((r, i) => `<a class="shelf${r.online ? '' : ' off'}" href="#rig-${esc(r.id)}" data-id="${esc(r.id)}" style="--c:${r.color};--spin:${speed(r)}s;--i:${i}">
-          <span class="shelf-head"><span class="led ${r.state}"></span><b>${esc(r.name)}</b><span class="hr" data-hr></span></span>
-          <span class="cards">${(r.gpus.length ? r.gpus : ['GPU']).map((g) => `<span class="gpu"><span class="shroud">${'<span class="fan"><i></i></span>'.repeat(fansFor(g))}<span class="model">${esc(g)}</span></span></span>`).join('')}</span>
-          <span class="rail" aria-hidden="true"></span>
-        </a>`).join('') || '<p class="muted">No rigs in rigs.json.</p>';
+        const odd = M.rigs.length % 2 === 1;
+        const rigs = M.rigs.map((r, i) => rigHTML(r, i, odd && i === M.rigs.length - 1, speed(r))).join('');
+        const dock = ordered.length ? `<div class="shelf dock wide" style="--i:${M.rigs.length}">
+          <span class="shelf-head"><b>On order</b><span class="hr" style="color:var(--copper)">${ordered.length}<small>${ordered.length > 1 ? 'cards' : 'card'}, not mining yet</small></span></span>
+          <div class="boxes">${ordered.map((q) => `<span class="box">${boxSVG}<b>${esc(q.card)}</b><small>${q.cost ? usd(q.cost, 0) : 'free'}</small></span>`).join('')}</div>
+        </div>` : '';
+        el.innerHTML = rigs + dock || '<p class="muted">No rigs in rigs.json.</p>';
       }
       for (const r of M.rigs) {
         const hr = el.querySelector(`[data-id="${CSS.escape(r.id)}"] [data-hr]`);
@@ -551,8 +653,8 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
   function render() {
     if (!data) return;
     const pool = data.pool, cfg = data.config;
-    $('wallet').textContent = `${shortAddr(cfg.wallet)} on HeroMiners`;
-    $('wallet').title = cfg.wallet;
+    $('wallet').textContent = cfg.wallet ? `${cfg.wallet} on HeroMiners` : 'HeroMiners';
+    $('signout').hidden = !cfg.locked;
     const fresh = data.lastPoll && Date.now() - data.lastPoll < cfg.pollMs * 2.2;
     $('live').className = `chip ${!data.lastPoll ? '' : fresh ? 'good' : 'warn'}`;
     $('liveText').textContent = data.lastPoll ? `Updated ${ago(data.lastPoll)}` : 'First check running';
@@ -585,7 +687,7 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
     renderPay();
     renderPlugs();
     renderSetup();
-    $('foot').textContent = `The server checks the pool every ${Math.round(cfg.pollMs / 60000)} minutes; pool data is from ${ago(pool.fetchedAt)}. Earnings use each rig's 6-hour hashrate and the current network difficulty. Power at ${usd(M.rate, 3)}/kWh.${M.hidden ? ` ${M.hidden} old worker${M.hidden > 1 ? 's' : ''} with no shares in 6 hours hidden.` : ''}`;
+    $('foot').textContent = `The server checks the pool every ${Math.round(cfg.pollMs / 60000)} minutes; pool data is from ${ago(pool.fetchedAt)}. Earnings use each rig's 6-hour hashrate and the current network difficulty. Power at ${usd(M.rate, 3)}/kWh.${M.hidden ? ` ${M.hidden} old worker${M.hidden > 1 ? 's' : ''} with no shares in 6 hours hidden.` : ''}${pool.workersHidden ? ` ${pool.workersHidden} more tiny workers on this wallet left out.` : ''}`;
     renderErrors();
   }
 
@@ -707,12 +809,17 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
         <div class="rig-foot">${esc(r.workerName || 'no worker')}${w ? `, ${w.sharesGood.toLocaleString()} good shares, ${stale.toFixed(2)}% stale or invalid` : ''}</div>
       </article>`;
     });
-    M.strays.forEach((s) => {
+    const strays = [...M.strays].sort((a, b) => b.pace - a.pace);
+    strays.slice(0, 4).forEach((s) => {
       cards.push(`<article class="glass rig unassigned">
         <div class="rig-head"><div style="min-width:0"><h3>${esc(s.name)}</h3><div class="gpus"><span>Not linked to a rig</span></div></div><span class="status good"><i></i>Mining</span></div>
         <div class="rate"><b>${hashParts(s.pace).n}<small>${hashParts(s.pace).u}</small></b><span class="s">Earning ${usd(s.revDay)} a day. Pick this worker for a rig in Rig setup to count its power.</span></div>
       </article>`);
     });
+    if (strays.length > 4) {
+      const rest = strays.slice(4);
+      cards.push(`<article class="glass rig unassigned"><div class="rate"><span class="s">${rest.length} more worker${rest.length > 1 ? 's' : ''} on this wallet not linked to a rig, ${hashStr(rest.reduce((a, x) => a + (x.pace || 0), 0))} between them. Link one in Rig setup if it’s yours.</span></div></article>`);
+    }
     $('rigs').innerHTML = cards.join('') || '<div class="glass rig"><span class="muted">No rigs configured.</span></div>';
   }
 
@@ -818,6 +925,7 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
   async function load(manual) {
     try {
       const r = await fetch(manual ? '/api/refresh' : '/api/data', { method: manual ? 'POST' : 'GET', cache: 'no-store' });
+      if (r.status === 401) { location.href = '/login'; return; }
       if (!r.ok) throw new Error(r.status);
       data = await r.json();
       render();

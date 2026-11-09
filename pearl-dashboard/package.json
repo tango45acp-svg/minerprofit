@@ -5,6 +5,6 @@
   "description": "Pearl (PRL) mining dashboard: HeroMiners stats + Govee plug watts, refreshed every 5 minutes",
   "type": "module",
   "main": "server.js",
-  "scripts": { "start": "node server.js" },
+  "scripts": { "start": "node server.js", "test": "node --test test.mjs" },
   "engines": { "node": ">=20" }
 }
