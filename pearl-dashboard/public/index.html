@@ -185,6 +185,25 @@ button { font: inherit; color: inherit; }
 .payout-bar i { display: block; height: 100%; background: var(--nacre); border-radius: 999px; box-shadow: 0 0 14px rgba(154, 214, 255, .5); transition: width .9s cubic-bezier(.3, .7, .2, 1); }
 .note { font-size: .82rem; color: var(--muted); border: 1px dashed var(--edge); border-radius: 12px; padding: 10px 12px; }
 
+/* ---------- payoff ---------- */
+.payoff { padding: 18px; display: grid; gap: 16px; min-width: 0; }
+#payoffBody { display: grid; gap: 16px; min-width: 0; }
+.payoff-top { display: grid; gap: 14px; }
+@media (min-width: 760px) { .payoff-top { grid-template-columns: .7fr 1.7fr; align-items: end; } }
+.payoff .pct { font: 300 clamp(2.6rem, 11vw, 3.6rem)/1 var(--f-display); letter-spacing: -.035em; background: var(--nacre); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; }
+.payoff .pct small { font-size: .4em; margin-left: .08em; -webkit-text-fill-color: var(--muted); }
+.q { display: grid; }
+.q-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; padding: 11px 0; border-top: 1px solid var(--edge); align-items: start; }
+.q-row:first-child { border-top: 0; padding-top: 0; }
+.q-row .n { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.q-row .n small, .q-row .d small { display: block; font-weight: 400; font-size: .76rem; color: var(--faint); }
+.q-row .d { text-align: right; font-size: .9rem; font-weight: 600; white-space: nowrap; }
+.q-row .track { grid-column: 1 / -1; }
+.q-row.done { opacity: .55; }
+.tag { font: 600 .66rem/1 var(--f-body); color: var(--aqua); border: 1px solid rgba(133, 241, 223, .4); border-radius: 999px; padding: 2px 7px; margin-left: 8px; vertical-align: 2px; white-space: nowrap; }
+details.cash > summary { cursor: pointer; font-size: .88rem; color: var(--muted); }
+details.cash .rows { margin-top: 6px; }
+
 /* ---------- setup ---------- */
 details.setup { padding: 0; }
 details.setup > summary { cursor: pointer; list-style: none; padding: 16px 18px; display: flex; justify-content: space-between; align-items: center; gap: 12px; font: 500 1rem var(--f-display); }
@@ -196,7 +215,7 @@ details[open].setup > summary::after { content: "−"; }
 .fs { border: 1px solid var(--edge); border-radius: 14px; padding: 12px; display: grid; gap: 10px; margin: 0; min-width: 0; }
 .fs legend { padding: 0 6px; font-weight: 600; font-size: .9rem; }
 .fields { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
-@media (min-width: 760px) { .fields { grid-template-columns: 1.3fr 1.3fr 1fr 1fr; } }
+@media (min-width: 760px) { .fields { grid-template-columns: 1.3fr 1.3fr 1fr; } }
 .fields label { display: grid; gap: 4px; font-size: .76rem; color: var(--muted); font-weight: 500; min-width: 0; }
 input, select { font: 16px var(--f-body); color: var(--ink); background: rgba(4, 11, 23, .6); border: 1px solid var(--edge); border-radius: 10px; padding: 8px 10px; width: 100%; min-width: 0; }
 input:focus, select:focus { border-color: rgba(154, 214, 255, .6); outline: none; box-shadow: 0 0 0 3px rgba(154, 214, 255, .15); }
@@ -260,6 +279,11 @@ footer { font-size: .8rem; color: var(--faint); display: grid; gap: 4px; }
   <div class="after-hero" style="display:grid;gap:26px">
     <section class="glass ledger" id="ledger" aria-label="Money"></section>
 
+    <section class="glass payoff" id="payoff" aria-labelledby="h-payoff">
+      <div class="sect-head"><h2 id="h-payoff">GPU payoff</h2><span class="muted" id="payoffNote"></span></div>
+      <div id="payoffBody"><span class="muted">Loading</span></div>
+    </section>
+
     <section style="display:grid;gap:12px" aria-labelledby="h-rigs">
       <div class="sect-head"><h2 id="h-rigs">Rigs</h2><span class="muted" id="rigNote"></span></div>
       <div class="rigs" id="rigs"><div class="glass rig"><span class="muted">Rigs appear after the first pool check.</span></div></div>
@@ -282,9 +306,9 @@ footer { font-size: .8rem; color: var(--faint); display: grid; gap: 4px; }
     </div>
 
     <details class="glass setup" id="setup">
-      <summary>Rig setup: names, watts and what you paid</summary>
+      <summary>Rig setup: names, workers and watts</summary>
       <div class="setup-body">
-        <p>Changes save on this device and update every number above. Watts means the draw at the wall; the Govee app shows it for each plug. Anything marked <span class="est" style="margin:0">est</span> is a placeholder until you set it.</p>
+        <p>Changes save on this device and update every number above. Watts means the draw at the wall; the Govee app shows it for each plug. Anything marked <span class="est" style="margin:0">est</span> is a placeholder until you set it. Card costs and cash-outs live in payoff.json on the server.</p>
         <div id="setList" style="display:grid;gap:12px"></div>
         <div class="setup-actions">
           <label for="rateIn">Electricity, $ per kWh<input id="rateIn" type="number" inputmode="decimal" min="0" step="0.005"></label>
@@ -309,7 +333,7 @@ footer { font-size: .8rem; color: var(--faint); display: grid; gap: 4px; }
   let data = null;
 
   // ---------- per-device settings ----------
-  const KEY = 'pearl-holo-v2';
+  const KEY = 'pearl-holo-v3';   // v3: rigs re-mapped Nov 2026, so older per-device overrides are dropped
   let S = {};
   try { S = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { S = {}; }
   S.rigs = S.rigs || {};
@@ -336,12 +360,7 @@ footer { font-size: .8rem; color: var(--faint); display: grid; gap: 4px; }
     const h = Math.floor(m / 60); if (h < 48) return `${h}h ${m % 60}m ago`;
     return `${Math.round(h / 24)} days ago`;
   }
-  function payback(days) {
-    if (days == null || !Number.isFinite(days)) return 'Not at today’s rate';
-    if (days < 45) return `${Math.round(days)} days`;
-    const mo = days / 30.44;
-    return mo > 36 ? 'Over 3 years' : `${mo.toFixed(1)} months`;
-  }
+  const day = (t) => (t == null || !Number.isFinite(t) ? '—' : new Date(t).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }));
   const shortAddr = (a) => (a && a.length > 20 ? `${a.slice(0, 8)}…${a.slice(-6)}` : a || '');
 
   // ---------- the money model ----------
@@ -404,7 +423,53 @@ footer { font-size: .8rem; color: var(--faint); display: grid; gap: 4px; }
     fleet.netDay = fleet.revDay != null ? fleet.revDay - fleet.powerDay : null;
     fleet.paybackDays = fleet.cost && fleet.netDay > 0 ? fleet.cost / fleet.netDay : null;
     rigs.forEach((x) => { x.share = fleet.pace ? x.pace / fleet.pace : 0; });
-    return { rigs, strays, hidden, fleet, price, perHash, rate: r };
+    const M = { rigs, strays, hidden, fleet, price, perHash, rate: r };
+    M.payoff = payoffModel(fleet.netDay);
+    return M;
+  }
+
+  // ---------- GPU payoff ----------
+  // Every dollar cashed out pays off the cards top to bottom (payoff.json order).
+  // Future dates use the fleet's live net a day (earnings minus power).
+  function payoffModel(net) {
+    const P = data.payoff || { cards: [], cashouts: [], safetradeBalance: null };
+    const bal = Number(P.safetradeBalance?.usdt) || 0;
+    const sent = (P.cashouts || []).reduce((a, c) => a + (Number(c.usdt) || 0), 0);
+    const cashed = sent + bal;
+    const now = Date.now();
+    let credit = cashed, cum = 0;
+    const queue = (P.cards || []).filter((c) => !c.paid).map((c) => {
+      const cost = Number(c.cost) || 0;
+      const applied = Math.min(cost, Math.max(0, credit));
+      credit -= applied;
+      cum += cost;
+      const left = cost - applied;
+      const days = left > 0 && net > 0 ? (cum - cashed) / net : null;
+      return { ...c, cost, applied, left, pct: cost ? applied / cost : 1, days, eta: days != null ? now + days * 864e5 : null };
+    });
+    const first = queue.find((q) => q.left > 0);
+    if (first) first.now = true;
+    const total = queue.reduce((a, q) => a + q.cost, 0);
+    const left = queue.reduce((a, q) => a + q.left, 0);
+    const last = queue.filter((q) => q.left > 0).at(-1);
+    const byRig = {};
+    for (const c of P.cards || []) {
+      if (!c.rig) continue;
+      byRig[c.rig] ||= { left: 0, eta: null };
+    }
+    for (const q of queue) {
+      if (!q.rig || q.left <= 0) continue;
+      const b = byRig[q.rig];
+      b.left += q.left;
+      b.eta = q.eta == null || b.eta === Infinity ? Infinity : Math.max(b.eta ?? 0, q.eta);
+    }
+    return {
+      queue, paidCards: (P.cards || []).filter((c) => c.paid), cashouts: P.cashouts || [], balance: P.safetradeBalance,
+      sent, bal, cashed, total, left, net,
+      ordered: queue.filter((q) => q.status === 'ordered').reduce((a, q) => a + q.left, 0),
+      pct: total ? (total - left) / total : 1,
+      allEta: last ? last.eta : now, allDays: last ? last.days : 0, byRig,
+    };
   }
 
   // ---------- count-up numbers (only the hero figures) ----------
@@ -617,8 +682,9 @@ footer { font-size: .8rem; color: var(--faint); display: grid; gap: 4px; }
       <div class="cell"><span class="lab">Earning</span><span class="v">${usd(F.revDay)}<small>a day</small></span><span class="s">${prl(F.prlDay)} PRL at ${usd(M.price)}</span></div>
       <div class="cell"><span class="lab">Power</span><span class="v">${usd(F.powerDay)}<small>a day</small></span><span class="s">${wattsStr(F.watts)}${F.wattsEst ? '<span class="est">est</span>' : ''}, ${usd(F.powerDay * 30.44, 0)} a month</span></div>
       <div class="cell"><span class="lab">Pool actually paid</span><span class="v">${prl(paid7)}<small>PRL a day</small></span><span class="s">7-day average${match ? `, ${match}% of expected` : ''}</span></div>
-      <div class="cell"><span class="lab">Rigs cost</span><span class="v">${F.cost ? usd(F.cost, 0) : '—'}${F.costEst ? '<span class="est">est</span>' : ''}</span><span class="s">${F.paybackDays ? `Pays back in ${payback(F.paybackDays).toLowerCase()} at today's net` : 'No payback at today’s net'}</span></div>`;
+      <div class="cell"><span class="lab">Left to pay off</span><span class="v">${usd(M.payoff.left, 0)}</span><span class="s">${M.payoff.left <= 0 ? 'Every GPU is paid off' : M.payoff.allEta ? `All GPUs paid off ${day(M.payoff.allEta)}` : 'No payoff at today’s net'}</span></div>`;
 
+    renderPayoff(M.payoff);
     renderRigs(M);
     renderChart();
     renderPay();
@@ -626,6 +692,43 @@ footer { font-size: .8rem; color: var(--faint); display: grid; gap: 4px; }
     renderSetup();
     $('foot').textContent = `The server checks the pool every ${Math.round(cfg.pollMs / 60000)} minutes; pool data is from ${ago(pool.fetchedAt)}. Earnings use each rig's 6-hour hashrate and the current network difficulty. Power at ${usd(M.rate, 3)}/kWh.${M.hidden ? ` ${M.hidden} old worker${M.hidden > 1 ? 's' : ''} with no shares in 6 hours hidden.` : ''}`;
     renderErrors();
+  }
+
+  function renderPayoff(P) {
+    if (!P.queue.length) { $('payoffNote').textContent = ''; $('payoffBody').innerHTML = '<span class="muted">No cards in payoff.json on the server.</span>'; return; }
+    $('payoffNote').textContent = P.left <= 0 ? 'Everything is paid off' : P.net > 0 ? `${usd(P.net)} a day after power goes to the next card` : 'Not earning after power right now';
+    const rigName = (id) => { const r = (data.rigs || []).find((x) => x.id === id); return r ? (S.rigs[r.id]?.name || r.name) : ''; };
+    const rows = P.queue.map((q) => {
+      const where = q.status === 'ordered' ? 'On order' : rigName(q.rig);
+      const right = q.left <= 0 ? (q.cost ? 'Paid off' : 'Free') : q.eta ? day(q.eta) : 'Not at today’s net';
+      return `<div class="q-row${q.now ? ' now' : ''}${q.left <= 0 ? ' done' : ''}">
+        <span class="n">${esc(q.card)}${q.now ? '<span class="tag">Paying off now</span>' : ''}<small>${esc(where)}${q.cost ? `, cost ${usd(q.cost, 0)}` : ''}</small></span>
+        <span class="d">${right}<small>${q.left > 0 ? `${usd(q.left, 0)} left` : ''}</small></span>
+        <div class="track" style="--c:var(--aqua)"><i style="width:${(q.pct * 100).toFixed(1)}%"></i></div>
+      </div>`;
+    }).join('');
+    const cash = [...P.cashouts].sort((a, b) => (a.date < b.date ? 1 : -1)).map((c) =>
+      `<div class="row"><span class="l">Sent to wallet <span class="faint">${day(new Date(`${c.date}T12:00:00`).getTime())}, ${esc(c.network || '')}</span></span><span class="r">${usd(Number(c.usdt))}</span></div>`).join('');
+    const balRow = P.balance ? `<div class="row"><span class="l">Still on SafeTrade <span class="faint">as of ${day(new Date(`${P.balance.asOf}T12:00:00`).getTime())}</span></span><span class="r">${usd(P.bal)}</span></div>` : '';
+    const paid = P.paidCards.map((c) => esc(c.card)).join(' and ');
+    $('payoffBody').innerHTML = `
+      <div class="payoff-top">
+        <div style="display:grid;gap:6px">
+          <span class="muted" style="font-size:.85rem">Paid off so far</span>
+          <span class="pct">${Math.floor(P.pct * 100)}<small>%</small></span>
+          <span class="muted" style="font-size:.85rem">${usd(P.cashed, 0)} cashed out toward ${usd(P.total, 0)} of GPUs</span>
+        </div>
+        <div class="money">
+          <div><span>Cashed out</span><b>${usd(P.cashed, 0)}</b><small>${usd(P.sent, 0)} to wallet, ${usd(P.bal, 0)} on SafeTrade</small></div>
+          <div><span>Left to pay</span><b>${usd(P.left, 0)}</b><small>${P.ordered ? `${usd(P.ordered, 0)} is cards on order` : 'nothing on order'}</small></div>
+          <div><span>All paid off</span><b>${P.left <= 0 ? 'Done' : P.allEta ? day(P.allEta) : '—'}</b><small>${P.left <= 0 ? '' : P.allDays != null ? `${Math.round(P.allDays)} days at today’s net` : 'not at today’s net'}</small></div>
+        </div>
+      </div>
+      <div class="payout-bar" role="progressbar" aria-valuenow="${Math.floor(P.pct * 100)}" aria-valuemin="0" aria-valuemax="100" aria-label="GPUs paid off"><i style="width:${(P.pct * 100).toFixed(1)}%"></i></div>
+      <div class="q">${rows}</div>
+      ${paid ? `<p class="muted" style="font-size:.82rem">Already paid off before this tracker: ${paid}.</p>` : ''}
+      <details class="cash"><summary>Cash-outs from selling Pearl (${P.cashouts.length + (P.balance ? 1 : 0)})</summary><div class="rows">${balRow}${cash}</div></details>
+      <p class="note">Cashed out is the USDT you got selling Pearl on SafeTrade, counting 1 USDT as $1. Pearl you still hold isn’t counted. Dates move with live hashrate, difficulty, PRL price and power, and leave out cards on order until they’re mining.</p>`;
   }
 
   function renderErrors() {
@@ -656,6 +759,7 @@ footer { font-size: .8rem; color: var(--faint); display: grid; gap: 4px; }
       const stale = w && w.sharesGood ? ((w.sharesStale + w.sharesInvalid) / (w.sharesGood + w.sharesStale + w.sharesInvalid)) * 100 : 0;
       const powerTxt = r.online ? usd(r.powerDay) : '$0.00';
       const netCls = r.netDay == null ? '' : r.netDay >= 0 ? 'pos' : 'neg';
+      const owe = M.payoff.byRig[r.id];
       return `<article class="glass rig" id="rig-${esc(r.id)}" style="--c:${r.color}">
         <div class="rig-head">
           <div class="rig-id">${glyph(r.color, r.online)}<div style="min-width:0"><h3>${esc(r.name)}</h3>
@@ -673,8 +777,8 @@ footer { font-size: .8rem; color: var(--faint); display: grid; gap: 4px; }
           <div><span>Net</span><b class="${netCls}">${usd(r.netDay)}</b><small>${usd(r.netDay != null ? r.netDay * 30.44 : null, 0)}/mo</small></div>
         </div>
         <dl class="facts">
-          <div><dt>Rig cost</dt><dd>${r.cost ? usd(r.cost, 0) : '—'}${r.cost && r.costSrc === 'est' ? '<span class="est">est</span>' : ''}</dd></div>
-          <div><dt>Pays back in</dt><dd>${payback(r.paybackDays)}</dd></div>
+          <div><dt>Still owes</dt><dd>${owe ? (owe.left > 0 ? usd(owe.left, 0) : 'Paid off') : '—'}</dd></div>
+          <div><dt>Paid off by</dt><dd>${!owe ? '—' : owe.left <= 0 ? 'Done' : owe.eta === Infinity || owe.eta == null ? 'Not at today’s net' : day(owe.eta)}</dd></div>
           <div><dt>Draw at the wall</dt><dd>${wattsStr(r.watts)}${r.wattsSrc === 'est' ? '<span class="est">est</span>' : ''}</dd></div>
           <div><dt>Power cost per PRL</dt><dd>${r.powerPerPrl != null && r.online ? usd(r.powerPerPrl) : '—'}</dd></div>
           <div><dt>Efficiency</dt><dd>${r.perWatt ? `${hashStr(r.perWatt)} per W` : '—'}</dd></div>
@@ -779,7 +883,6 @@ footer { font-size: .8rem; color: var(--faint); display: grid; gap: 4px; }
         <label for="n-${i}">Name<input id="n-${i}" data-r="${esc(cfg.id)}" data-k="name" value="${esc(o.name || '')}" placeholder="${esc(cfg.name)}"></label>
         <label for="w-${i}">Pool worker<select id="w-${i}" data-r="${esc(cfg.id)}" data-k="worker">${opts}</select></label>
         <label for="p-${i}">Watts at the wall<input id="p-${i}" data-r="${esc(cfg.id)}" data-k="watts" type="number" inputmode="numeric" min="0" step="5" value="${esc(o.watts ?? '')}" placeholder="${esc(cfg.watts ?? '')}"></label>
-        <label for="c-${i}">What it cost, $<input id="c-${i}" data-r="${esc(cfg.id)}" data-k="cost" type="number" inputmode="numeric" min="0" step="10" value="${esc(o.cost ?? '')}" placeholder="${esc(cfg.cost ?? '')}"></label>
       </div></fieldset>`;
     }).join('') || '<span class="muted">No rigs in rigs.json.</span>';
   }

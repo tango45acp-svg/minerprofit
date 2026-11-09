@@ -24,6 +24,30 @@ function loadRigs() {
 }
 const RIG_CFG = loadRigs();
 
+// Payoff tracker: what each GPU cost, in payoff order, and the cash Pearl has
+// turned into (SafeTrade withdrawals + balance). PAYOFF_JSON replaces the file.
+function loadPayoff() {
+  try {
+    const raw = process.env.PAYOFF_JSON || readFileSync(new URL('./payoff.json', import.meta.url), 'utf8');
+    const cfg = JSON.parse(raw);
+    return {
+      cards: Array.isArray(cfg.cards) ? cfg.cards : [],
+      cashouts: Array.isArray(cfg.cashouts) ? cfg.cashouts : [],
+      safetradeBalance: cfg.safetradeBalance || null,
+    };
+  } catch (e) {
+    console.error('payoff.json unreadable:', e.message);
+    return { cards: [], cashouts: [], safetradeBalance: null };
+  }
+}
+const PAYOFF = loadPayoff();
+// A rig's cost is what its cards still owe, unless rigs.json sets one.
+const RIGS = RIG_CFG.rigs.map((r) => {
+  const owed = PAYOFF.cards.filter((c) => c.rig === r.id && !c.paid && Number(c.cost) > 0);
+  if (r.cost != null || !owed.length) return r;
+  return { ...r, cost: owed.reduce((a, c) => a + Number(c.cost), 0), costSource: 'you' };
+});
+
 const PORT = Number(process.env.PORT || 3000);
 const WALLET = (process.env.PRL_WALLET || '').trim();
 const GOVEE_KEY = (process.env.GOVEE_API_KEY || '').trim();
@@ -226,7 +250,8 @@ function payload() {
   return {
     now: Date.now(),
     config: { rate: RATE, estWatts: EST_WATTS, pollMs: POLL_MS, wallet: WALLET, goveeEnabled: !!GOVEE_KEY },
-    rigs: RIG_CFG.rigs,
+    rigs: RIGS,
+    payoff: PAYOFF,
     startedAt: state.startedAt,
     lastPoll: state.lastPoll,
     nextPoll: state.nextPoll,
