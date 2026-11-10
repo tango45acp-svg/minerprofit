@@ -1,5 +1,5 @@
 {
-  "_note": "What the GPUs cost and the cash Pearl has turned into. Cards are paid off top to bottom with every dollar cashed out. status: 'mining' or 'ordered'. paid: true = already paid off before this tracker. Cash-outs are USDT from selling PRL on SafeTrade (1 USDT counted as $1). Update safetradeBalance and add a cashouts row each time you withdraw. electricBills: one row per monthly electric bill, { month: 'YYYY-MM', amount: total bill in $, mining: optional $ of it that's the rigs }. Bills are an expense: they come off the cash before it pays down GPUs (the 'mining' part if given, else the whole bill).",
+  "_note": "What the GPUs cost and the cash Pearl has turned into. Cards are paid off top to bottom with every dollar cashed out. status: 'mining', 'ordered' (not arrived yet) or 'idle' (here but not in a rig). cost: null = price not given yet. paid: true = already paid off before this tracker. Cash-outs are USDT from selling PRL on SafeTrade (1 USDT counted as $1). Update safetradeBalance and add a cashouts row each time you withdraw. electricBills: one row per monthly electric bill, { month: 'YYYY-MM', amount: total bill in $, mining: optional $ of it that's the rigs }. Bills are an expense: they come off the cash before it pays down GPUs (the 'mining' part if given, else the whole bill).",
   "cards": [
     {
       "id": "4090",
@@ -25,22 +25,30 @@
     {
       "id": "5060ti",
       "card": "RTX 5060 Ti",
-      "rig": "rig-5060ti-2070s",
+      "rig": "rig-5060ti-5060",
       "cost": 800,
       "status": "mining"
     },
     {
       "id": "5060",
       "card": "RTX 5060",
-      "rig": null,
+      "rig": "rig-5060ti-5060",
       "cost": 350,
-      "status": "ordered"
+      "status": "mining"
     },
     {
       "id": "2080",
       "card": "RTX 2080",
       "rig": null,
       "cost": 260,
+      "status": "idle",
+      "note": "not installed yet"
+    },
+    {
+      "id": "5060ti-b",
+      "card": "RTX 5060 Ti",
+      "rig": null,
+      "cost": null,
       "status": "ordered"
     },
     {
@@ -48,8 +56,8 @@
       "card": "RTX 2070 Super",
       "rig": null,
       "cost": 0,
-      "status": "ordered",
-      "note": "free"
+      "status": "idle",
+      "note": "spare"
     },
     {
       "id": "4080s",
@@ -62,10 +70,11 @@
     {
       "id": "2070s-a",
       "card": "RTX 2070 Super",
-      "rig": "rig-5060ti-2070s",
+      "rig": null,
       "cost": null,
-      "status": "mining",
-      "paid": true
+      "status": "idle",
+      "paid": true,
+      "note": "spare"
     }
   ],
   "cashouts": [

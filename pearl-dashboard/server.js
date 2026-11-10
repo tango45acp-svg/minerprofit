@@ -56,7 +56,7 @@ function loadPayoff() {
         card: str(c.card, 40),
         rig: ID.test(c.rig) ? c.rig : null,
         cost: pos(c.cost),
-        status: c.status === 'ordered' ? 'ordered' : 'mining',
+        status: c.status === 'ordered' || c.status === 'idle' ? c.status : 'mining',
         ...(c.paid === true ? { paid: true } : {}),
         ...(c.note ? { note: str(c.note, 80) } : {}),
       })),

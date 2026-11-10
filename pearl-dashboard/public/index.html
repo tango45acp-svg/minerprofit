@@ -144,9 +144,14 @@ a.shelf:hover .shelf-head b { color: var(--c); }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* cards that are bought but not mining yet: still in the box */
-.dock .boxes { display: flex; gap: 10px; margin-top: 9px; padding: 12px 12px 10px; border: 1px dashed var(--extrusion); border-radius: 4px; }
-.box { flex: 1 1 0; min-width: 0; max-width: 170px; display: grid; gap: 5px; justify-items: center; text-align: center; }
+.dock .boxes { display: flex; flex-wrap: wrap; gap: 14px 10px; margin-top: 9px; padding: 12px 12px 10px; border: 1px dashed var(--extrusion); border-radius: 4px; }
+.box { flex: 1 1 40%; min-width: 0; display: grid; gap: 5px; justify-items: center; align-content: end; text-align: center; }
+@media (min-width: 900px) { .box { flex: 1 1 0; max-width: 220px; } }
 .box svg { display: block; width: min(100%, 92px); height: auto; }
+.box.spare svg { width: min(100%, 150px); }
+.spare .strip { stroke: #4a545e; filter: none; }
+.spare .hub { stroke: #4a545e; }
+.spare .spin { animation: none; }
 .box b { font: 600 .74rem/1.2 var(--f-display); overflow-wrap: anywhere; }
 .box small { font-size: .7rem; color: var(--faint); }
 
@@ -510,7 +515,7 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
       cum += cost;
       const left = cost - applied;
       const days = left > 0 && net > 0 ? (cum - avail) / net : null;
-      return { ...c, cost, applied, left, pct: cost ? applied / cost : 1, days, eta: days != null ? now + days * 864e5 : null };
+      return { ...c, cost, unknown: c.cost == null, applied, left, pct: cost ? applied / cost : c.cost == null ? 0 : 1, days, eta: days != null ? now + days * 864e5 : null };
     });
     const first = queue.find((q) => q.left > 0);
     if (first) first.now = true;
@@ -531,7 +536,8 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
     return {
       queue, paidCards: (P.cards || []).filter((c) => c.paid), cashouts: P.cashouts || [], balance: P.safetradeBalance,
       sent, bal, cashed, bills, power, avail, total, left, net,
-      ordered: queue.filter((q) => q.status === 'ordered').reduce((a, q) => a + q.left, 0),
+      ordered: queue.filter((q) => q.status !== 'mining').reduce((a, q) => a + q.left, 0),
+      noPrice: queue.filter((q) => q.unknown).length,
       pct: total ? (total - left) / total : 1,
       allEta: last ? last.eta : now, allDays: last ? last.days : 0, byRig,
     };
@@ -566,17 +572,17 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
 
     const fan = (cx) => `<g transform="translate(${cx} 60)"><circle r="41" fill="#0a0d10" stroke="#5b6671" stroke-width="2"/><g class="spin"><use href="#gf"/></g><circle r="11.5" fill="#1b2025" stroke="#66717c" stroke-width="1.2"/><circle class="hub" r="6.2"/><circle r="2" fill="#0a0d10"/></g>`;
 
-    function cardSVG(g, style) {
+    function cardSVG(g, style, bare) {   // bare: a card off the rig, no riser or power lead
       const three = fansFor(g) === 3, old = isOld(g);
       const W = cardW(g), E = W - 16, plug = E - 70;   // E: where the shroud ends
       const cable = `M${plug} 6 C${plug} -17 ${W - 8} -19 ${W - 8} 18 V150`;
-      return `<svg viewBox="0 -14 ${W} 164" style="${style}" aria-hidden="true" focusable="false">
-        <path class="cable" d="${cable}"/><path class="braid" d="${cable}"/>
+      return `<svg viewBox="0 -14 ${W} ${bare ? 146 : 164}" style="${style}" aria-hidden="true" focusable="false">
+        <g${bare ? ' display="none"' : ''}><path class="cable" d="${cable}"/><path class="braid" d="${cable}"/>
         <path class="usb" d="M185 140 V150"/>
         <rect x="26" y="134" width="180" height="9.5" rx="1.5" fill="#0e3f7a"/>
         <rect x="34" y="127" width="164" height="8" rx="1" fill="#090b0d"/>
         <rect x="176" y="135.5" width="18" height="7.5" rx="1" fill="#c3cbd3"/>
-        <circle cx="44" cy="138.7" r="2.7" fill="#161b20"/><circle cx="55" cy="138.7" r="2.7" fill="#161b20"/><rect x="66" y="136.5" width="9" height="4.5" fill="#161b20"/>
+        <circle cx="44" cy="138.7" r="2.7" fill="#161b20"/><circle cx="55" cy="138.7" r="2.7" fill="#161b20"/><rect x="66" y="136.5" width="9" height="4.5" fill="#161b20"/></g>
         <rect x="8" y="106" width="${E - 4}" height="16" rx="1" fill="#0b1411"/>
         <rect x="40" y="120" width="20" height="9" fill="url(#p-gold)"/><rect x="66" y="120" width="126" height="9" fill="url(#p-gold)"/>
         <rect x="0" y="-8" width="9" height="140" rx="1.5" fill="url(#g-metal)"/><rect x="0" y="-8" width="22" height="5.5" rx="1.5" fill="url(#g-metal)"/><circle cx="16" cy="-5.2" r="1.6" fill="#3a454f"/>
@@ -627,15 +633,19 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
     function set(M) {
       const top = Math.max(0, ...M.rigs.map((r) => r.pace || 0));
       const speed = (r) => (r.online && top ? (0.3 + 1.1 * (1 - r.pace / top)).toFixed(2) : '0');
-      const ordered = M.payoff.queue.filter((q) => q.status === 'ordered');
-      const sig = JSON.stringify([M.rigs.map((r) => [r.id, r.name, r.gpus, r.state, r.color, speed(r), r.watts]), ordered.map((q) => [q.card, q.cost])]);
+      const ordered = (data.payoff?.cards || []).filter((c) => c.status !== 'mining');   // on order, or here but not in a rig
+      const sig = JSON.stringify([M.rigs.map((r) => [r.id, r.name, r.gpus, r.state, r.color, speed(r), r.watts]), ordered.map((q) => [q.card, q.cost, q.status, q.note])]);
       if (sig !== key) {   // rebuild only when something visible changes, so fans don't restart every minute
         key = sig;
         const odd = M.rigs.length % 2 === 1;
         const rigs = M.rigs.map((r, i) => rigHTML(r, i, odd && i === M.rigs.length - 1, speed(r))).join('');
-        const dock = ordered.length ? `<div class="shelf dock wide" style="--i:${M.rigs.length}">
-          <span class="shelf-head"><b>On order</b><span class="hr" style="color:var(--copper)">${ordered.length}<small>${ordered.length > 1 ? 'cards' : 'card'}, not mining yet</small></span></span>
-          <div class="boxes">${ordered.map((q) => `<span class="box">${boxSVG}<b>${esc(q.card)}</b><small>${q.cost ? usd(q.cost, 0) : 'free'}</small></span>`).join('')}</div>
+        const coming = ordered.filter((q) => q.status === 'ordered').length, spare = ordered.length - coming;
+        const price = (q) => (q.cost ? usd(q.cost, 0) : q.cost == null && !q.paid ? 'price to add' : q.paid ? 'paid off' : 'free');
+        const dock = ordered.length ? `<div class="shelf dock wide" style="--i:${M.rigs.length};--c:var(--faint)">
+          <span class="shelf-head"><b>Not mining yet</b><span class="hr" style="color:var(--copper)">${ordered.length}<small>${[coming ? `${coming} on order` : '', spare ? `${spare} on the shelf` : ''].filter(Boolean).join(', ')}</small></span></span>
+          <div class="boxes">${ordered.map((q) => (q.status === 'ordered'
+            ? `<span class="box">${boxSVG}<b>${esc(q.card)}</b><small>on order, ${price(q)}</small></span>`
+            : `<span class="box spare">${cardSVG(q.card, '', true)}<b>${esc(q.card)}</b><small>${esc(q.note || 'spare')}, ${price(q)}</small></span>`)).join('')}</div>
         </div>` : '';
         el.innerHTML = rigs + dock || '<p class="muted">No rigs in rigs.json.</p>';
       }
@@ -696,8 +706,8 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
     $('payoffNote').textContent = P.left <= 0 ? 'Everything is paid off' : P.net > 0 ? `${usd(P.net)} a day after power goes to the next card` : 'Not earning after power right now';
     const rigName = (id) => { const r = (data.rigs || []).find((x) => x.id === id); return r ? (S.rigs[r.id]?.name || r.name) : ''; };
     const rows = P.queue.map((q) => {
-      const where = q.status === 'ordered' ? 'On order' : rigName(q.rig);
-      const right = q.left <= 0 ? (q.cost ? 'Paid off' : 'Free') : q.eta ? day(q.eta) : 'Not at today’s net';
+      const where = q.status === 'ordered' ? 'On order' : q.status === 'idle' ? 'Here, not mining yet' : rigName(q.rig);
+      const right = q.left <= 0 ? (q.cost ? 'Paid off' : q.unknown ? 'Price to add' : 'Free') : q.eta ? day(q.eta) : 'Not at today’s net';
       return `<div class="q-row${q.now ? ' now' : ''}${q.left <= 0 ? ' done' : ''}">
         <span class="n">${esc(q.card)}${q.now ? '<span class="tag">Paying off now</span>' : ''}<small>${esc(where)}${q.cost ? `, cost ${usd(q.cost, 0)}` : ''}</small></span>
         <span class="d">${right}<small>${q.left > 0 ? `${usd(q.left, 0)} left` : ''}</small></span>
@@ -718,7 +728,7 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
         <div class="money four">
           <div><span>Cashed out</span><b>${usd(P.cashed, 0)}</b><small>${usd(P.sent, 0)} to wallet, ${usd(P.bal, 0)} on SafeTrade</small></div>
           <div><span>Electricity paid</span><b>${usd(P.power, 0)}</b><small>${P.bills.length ? `${P.bills.length} bill${P.bills.length > 1 ? 's' : ''} so far` : 'no bills sent yet'}</small></div>
-          <div><span>Left to pay</span><b>${usd(P.left, 0)}</b><small>${P.ordered ? `${usd(P.ordered, 0)} is cards on order` : 'nothing on order'}</small></div>
+          <div><span>Left to pay</span><b>${usd(P.left, 0)}</b><small>${P.ordered ? `${usd(P.ordered, 0)} is cards not mining yet` : 'every card owed on is mining'}${P.noPrice ? `, ${P.noPrice} with no price yet` : ''}</small></div>
           <div><span>All paid off</span><b>${P.left <= 0 ? 'Done' : P.allEta ? day(P.allEta) : '—'}</b><small>${P.left <= 0 ? '' : P.allDays != null ? `${Math.round(P.allDays)} days at today’s net` : 'not at today’s net'}</small></div>
         </div>
       </div>

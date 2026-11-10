@@ -1,11 +1,13 @@
 {
-  "_note": "Defaults for each rig. watts = draw at the wall. Source 'you' = a number Cade gave, 'est' = an estimate to replace. What each rig still owes comes from the cards in payoff.json. Workers matched by hashrate on Nov 8, 2026. Edit here (or per-browser in the page's Rig setup panel).",
+  "_note": "Defaults for each rig. watts = draw at the wall. Source 'you' = a number Cade gave, 'est' = an estimate to replace. What each rig still owes comes from the cards in payoff.json. Workers matched by hashrate on Nov 8, 2026. Nov 10: the 5060 replaced the 2070 Super in the 5060 Ti rig (watts there is an estimate until read off the plug). Edit here (or per-browser in the page's Rig setup panel).",
   "rate": 0.09,
   "rigs": [
     {
       "id": "rig-4090",
       "name": "4090 rig",
-      "gpus": ["RTX 4090"],
+      "gpus": [
+        "RTX 4090"
+      ],
       "worker": "desktop-d40gemj",
       "watts": 650,
       "wattsSource": "you"
@@ -13,7 +15,10 @@
     {
       "id": "rig-4080s-5070ti",
       "name": "4080 Super + 5070 Ti",
-      "gpus": ["RTX 4080 Super", "RTX 5070 Ti"],
+      "gpus": [
+        "RTX 4080 Super",
+        "RTX 5070 Ti"
+      ],
       "worker": "rigD94BE2",
       "watts": 850,
       "wattsSource": "you"
@@ -21,17 +26,22 @@
     {
       "id": "rig-5070ti",
       "name": "5070 Ti rig",
-      "gpus": ["RTX 5070 Ti"],
+      "gpus": [
+        "RTX 5070 Ti"
+      ],
       "worker": "desktop-s6ms9t5",
       "watts": 325,
       "wattsSource": "est"
     },
     {
-      "id": "rig-5060ti-2070s",
-      "name": "5060 Ti + 2070 Super",
-      "gpus": ["RTX 5060 Ti", "RTX 2070 Super"],
+      "id": "rig-5060ti-5060",
+      "name": "5060 Ti + 5060",
+      "gpus": [
+        "RTX 5060 Ti",
+        "RTX 5060"
+      ],
       "worker": "desktop-n8kcvuu",
-      "watts": 400,
+      "watts": 350,
       "wattsSource": "est"
     }
   ]
