@@ -1,5 +1,5 @@
 {
-  "_note": "Defaults for each rig. watts = draw at the wall. Source 'you' = a number Cade gave, 'est' = an estimate to replace. What each rig still owes comes from the cards in payoff.json. Workers matched by hashrate on Nov 8, 2026. Nov 10: the 5060 replaced the 2070 Super in the 5060 Ti rig (watts there is an estimate until read off the plug). Edit here (or per-browser in the page's Rig setup panel).",
+  "_note": "Defaults for each rig. watts = draw at the wall. Source 'you' = a number Cade gave, 'est' = an estimate to replace. What each rig still owes comes from the cards in payoff.json. Workers matched by hashrate on Nov 8, 2026. Nov 10: the 5060 replaced the 2070 Super in the 5060 Ti rig (watts there is an estimate until read off the plug). Nov 14: the 4080 Super + 5070 Ti rig and the 5070 Ti rig moved to HiveOS, so their pool worker names changed (LLM_Job and rig0EE7F6, matched by hashrate). Edit here (or per-browser in the page's Rig setup panel).",
   "rate": 0.09,
   "rigs": [
     {
@@ -19,7 +19,7 @@
         "RTX 4080 Super",
         "RTX 5070 Ti"
       ],
-      "worker": "rigD94BE2",
+      "worker": "LLM_Job",
       "watts": 850,
       "wattsSource": "you"
     },
@@ -29,7 +29,7 @@
       "gpus": [
         "RTX 5070 Ti"
       ],
-      "worker": "desktop-s6ms9t5",
+      "worker": "rig0EE7F6",
       "watts": 325,
       "wattsSource": "est"
     },

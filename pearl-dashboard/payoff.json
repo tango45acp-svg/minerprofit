@@ -42,14 +42,23 @@
       "rig": null,
       "cost": 260,
       "status": "idle",
-      "note": "not installed yet"
+      "note": "waiting on parts"
     },
     {
       "id": "5060ti-b",
       "card": "RTX 5060 Ti",
       "rig": null,
       "cost": null,
-      "status": "ordered"
+      "status": "idle",
+      "note": "waiting on parts"
+    },
+    {
+      "id": "2080ti",
+      "card": "RTX 2080 Ti",
+      "rig": null,
+      "cost": null,
+      "status": "ordered",
+      "note": "11GB"
     },
     {
       "id": "2070s-b",
@@ -57,7 +66,7 @@
       "rig": null,
       "cost": 0,
       "status": "idle",
-      "note": "spare"
+      "note": "waiting on parts"
     },
     {
       "id": "4080s",
@@ -74,7 +83,7 @@
       "cost": null,
       "status": "idle",
       "paid": true,
-      "note": "spare"
+      "note": "waiting on parts"
     }
   ],
   "cashouts": [
@@ -101,11 +110,17 @@
       "network": "Solana",
       "usdt": 363.937346,
       "fee": 1
+    },
+    {
+      "date": "2026-11-14",
+      "network": "Solana",
+      "usdt": 510.681726,
+      "fee": 1
     }
   ],
   "safetradeBalance": {
-    "asOf": "2026-11-08",
-    "usdt": 409.956747
+    "asOf": "2026-11-14",
+    "usdt": 0
   },
   "electricBills": []
 }
