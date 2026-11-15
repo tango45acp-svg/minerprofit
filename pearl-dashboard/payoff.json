@@ -48,7 +48,7 @@
       "id": "5060ti-b",
       "card": "RTX 5060 Ti",
       "rig": null,
-      "cost": null,
+      "cost": 350,
       "status": "idle",
       "note": "waiting on parts"
     },
