@@ -56,7 +56,7 @@
       "id": "2080ti",
       "card": "RTX 2080 Ti",
       "rig": null,
-      "cost": null,
+      "cost": 300,
       "status": "ordered",
       "note": "11GB"
     },
