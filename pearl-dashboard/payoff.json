@@ -39,18 +39,16 @@
     {
       "id": "2080",
       "card": "RTX 2080",
-      "rig": null,
+      "rig": "rig-5060ti-2080",
       "cost": 260,
-      "status": "idle",
-      "note": "waiting on parts"
+      "status": "mining"
     },
     {
       "id": "5060ti-b",
       "card": "RTX 5060 Ti",
-      "rig": null,
+      "rig": "rig-5060ti-2080",
       "cost": 350,
-      "status": "idle",
-      "note": "waiting on parts"
+      "status": "mining"
     },
     {
       "id": "2080ti",
