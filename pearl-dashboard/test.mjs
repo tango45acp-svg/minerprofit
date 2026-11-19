@@ -94,6 +94,19 @@ test('open dashboard', async (t) => {
     assert.ok(Math.abs(d.pool.network.prlPerHashDay - (10 * 86400) / (4.8e9 * 2 ** 32)) < 1e-24);
   });
 
+  await t.test('rig photos are served, and only the photos', async () => {
+    const r = await s.req('/images/rtx-4090-rig-product.jpg');
+    assert.equal(r.status, 200);
+    assert.equal(r.headers['content-type'], 'image/jpeg');
+    assert.equal(r.headers['x-content-type-options'], 'nosniff');
+    const rigs = JSON.parse((await s.req('/api/data')).text).rigs;
+    assert.ok(rigs.every((x) => x.image === undefined || /^\/images\/[a-z0-9-]+\.jpg$/.test(x.image)));
+    assert.ok(rigs.some((x) => x.image));
+    for (const bad of ['/images/../server.js', '/images/%2e%2e/server.js', '/images/..%2Fserver.js', '/images/', '/images/nope.jpg', '/images/../../rigs.json', '/public/images/rtx-4090-rig-product.jpg']) {
+      assert.equal((await s.req(bad)).status, 404, bad);
+    }
+  });
+
   await t.test('a malformed address cannot crash the server', async () => {
     const r = await s.req('//');
     assert.equal(r.status, 400);

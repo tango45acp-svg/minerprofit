@@ -3,7 +3,7 @@
 // No dependencies; needs Node 20+ (built-in fetch).
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { randomUUID, createHash, createHmac, timingSafeEqual } from 'node:crypto';
 
 // Pearl network difficulty is in difficulty-1 shares; one share = 2^32 hashes.
@@ -21,6 +21,17 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const MONTH = /^\d{4}-\d{2}$/;
 const list = (v, max) => (Array.isArray(v) ? v.slice(0, max) : []);
 
+// Rig photos: read once at startup from public/images. Only these exact names are ever served.
+const IMAGE_NAME = /^[a-z0-9][a-z0-9-]{0,63}\.(jpg|png|webp)$/;
+const IMAGE_TYPES = { jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
+const IMAGES = new Map();
+try {
+  const dir = new URL('./public/images/', import.meta.url);
+  for (const f of readdirSync(dir)) {
+    if (IMAGE_NAME.test(f)) IMAGES.set(`/images/${f}`, { body: readFileSync(new URL(f, dir)), type: IMAGE_TYPES[f.split('.').pop()] });
+  }
+} catch { /* no images folder: rigs fall back to the drawn frame */ }
+
 // Rig defaults (names, worker, watts at the wall, what each rig cost).
 function loadRigs() {
   try {
@@ -33,6 +44,7 @@ function loadRigs() {
       worker: str(r.worker, 64),
       watts: pos(r.watts),
       wattsSource: r.wattsSource === 'est' ? 'est' : 'you',
+      ...(IMAGES.has(`/images/${r.image}`) ? { image: `/images/${r.image}` } : {}),
       ...(pos(r.cost) != null ? { cost: pos(r.cost), costSource: r.costSource === 'est' ? 'est' : 'you' } : {}),
     }));
     return { rate: pos(cfg.rate), rigs };
@@ -512,6 +524,11 @@ async function handle(req, res) {
     return send(req, res, 200, page.html, 'text/html; charset=utf-8', { 'Content-Security-Policy': page.csp });
   }
   if (path === '/api/data' && read) return sendJSON(req, res, 200, payload());
+  if (path.startsWith('/images/') && read) {
+    const img = IMAGES.get(path);
+    if (!img) return send(req, res, 404, 'Not found');
+    return send(req, res, 200, img.body, img.type, { 'Cache-Control': 'private, max-age=86400' });
+  }
   if (path === '/api/refresh') {
     if (!post) return send(req, res, 405, 'Method not allowed', undefined, { Allow: 'POST' });
     req.resume();

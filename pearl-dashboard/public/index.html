@@ -143,6 +143,16 @@ a.shelf:hover .shelf-head b { color: var(--c); }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* rigs with a photo: a clean, centered product shot on a dark stage */
+.shot { display: block; margin-top: 9px; border-radius: 4px; overflow: hidden; border: 1px solid var(--extrusion);
+  background: radial-gradient(ellipse 60% 85% at 50% 42%, #2a2b2e, #1a1b1d 60%, #131416); }
+.shot img { display: block; width: 100%; height: auto; max-height: 180px; object-fit: contain; margin: 0 auto; padding: 8px 10px 4px; box-sizing: border-box;
+  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 58%, transparent 100%); mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 58%, transparent 100%); }
+.shot .tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 0 10px 10px; }
+.shot .lbl { box-shadow: inset 0 -2px 0 var(--c); }
+.shelf.off .shot img { filter: grayscale(.85) brightness(.7); }
+.shelf.off .shot .lbl { box-shadow: none; }
+
 /* cards that are bought but not mining yet: still in the box */
 .dock .boxes { display: flex; flex-wrap: wrap; gap: 14px 10px; margin-top: 9px; padding: 12px 12px 10px; border: 1px dashed var(--extrusion); border-radius: 4px; }
 .box { flex: 1 1 40%; min-width: 0; display: grid; gap: 5px; justify-items: center; align-content: end; text-align: center; }
@@ -458,7 +468,7 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
       const powerDay = kwhDay * r;
       const netDay = revDay != null ? revDay - powerDay : null;
       return {
-        id: cfg.id, name: o.name || cfg.name, gpus: cfg.gpus || [], color: COLORS[i % COLORS.length],
+        id: cfg.id, name: o.name || cfg.name, gpus: cfg.gpus || [], image: cfg.image || null, color: COLORS[i % COLORS.length],
         worker: w, workerName, state, online, pace, prlDay, revDay, watts, wattsSrc, kwhDay, powerDay, netDay,
         cost, costSrc, paybackDays: cost && netDay > 0 ? cost / netDay : null,
         powerPerPrl: prlDay ? powerDay / prlDay : null,
@@ -620,13 +630,17 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
       const cards = gpus.map((g, n) => cardSVG(g, size(cardW(g), n === 0))).join('');
       const labels = gpus.map((g, n) => `<span class="slot" style="${size(cardW(g), n === 0)}"><span class="lbl">${esc(short ? g.replace(/^(RTX|GTX)\s+/i, '') : g)}</span></span>`).join('');
       const watts = r.watts != null ? `${Math.round(r.watts)} W` : 'PSU';
-      return `<a class="shelf ${r.state}${r.online ? '' : ' off'}${wide ? ' wide' : ''}" href="#rig-${esc(r.id)}" data-id="${esc(r.id)}" style="--c:${r.color};--spin:${speed}s;--i:${i}">
-        <span class="shelf-head"><span class="led ${r.state}"></span><b>${esc(r.name)}</b><span class="hr" data-hr></span></span>
-        <span class="frame" aria-hidden="true">
+      const visual = r.image
+        ? `<span class="shot"><img src="${esc(r.image)}" alt="${esc(r.name)} mining rig" width="900" height="604" decoding="async">
+            <span class="tags">${gpus.map((g) => `<span class="lbl">${esc(g)}</span>`).join('')}<span class="lbl w">${watts}</span></span></span>`
+        : `<span class="frame" aria-hidden="true">
           <span class="topbar"></span>
           <span class="bay">${cards}${psuSVG(size(PSU_W, false))}</span>
           <span class="rail">${labels}<span class="slot" style="${size(PSU_W, false)}"><span class="lbl w">${watts}</span></span></span>
-        </span>
+        </span>`;
+      return `<a class="shelf ${r.state}${r.online ? '' : ' off'}${wide ? ' wide' : ''}" href="#rig-${esc(r.id)}" data-id="${esc(r.id)}" style="--c:${r.color};--spin:${speed}s;--i:${i}">
+        <span class="shelf-head"><span class="led ${r.state}"></span><b>${esc(r.name)}</b><span class="hr" data-hr></span></span>
+        ${visual}
       </a>`;
     }
 
@@ -634,7 +648,7 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
       const top = Math.max(0, ...M.rigs.map((r) => r.pace || 0));
       const speed = (r) => (r.online && top ? (0.3 + 1.1 * (1 - r.pace / top)).toFixed(2) : '0');
       const ordered = (data.payoff?.cards || []).filter((c) => c.status !== 'mining');   // on order, or here but not in a rig
-      const sig = JSON.stringify([M.rigs.map((r) => [r.id, r.name, r.gpus, r.state, r.color, speed(r), r.watts]), ordered.map((q) => [q.card, q.cost, q.status, q.note])]);
+      const sig = JSON.stringify([M.rigs.map((r) => [r.id, r.name, r.gpus, r.image, r.state, r.color, speed(r), r.watts]), ordered.map((q) => [q.card, q.cost, q.status, q.note])]);
       if (sig !== key) {   // rebuild only when something visible changes, so fans don't restart every minute
         key = sig;
         const odd = M.rigs.length % 2 === 1;

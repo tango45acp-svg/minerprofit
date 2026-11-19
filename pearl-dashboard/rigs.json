@@ -1,5 +1,5 @@
 {
-  "_note": "Defaults for each rig. watts = draw at the wall. Source 'you' = a number Cade gave, 'est' = an estimate to replace. What each rig still owes comes from the cards in payoff.json. Workers matched by hashrate on Nov 8, 2026. Nov 10: the 5060 replaced the 2070 Super in the 5060 Ti rig (watts there is an estimate until read off the plug). Nov 14: the 4080 Super + 5070 Ti rig and the 5070 Ti rig moved to HiveOS, so their pool worker names changed (LLM_Job and rig0EE7F6, matched by hashrate). Nov 15: new HiveOS rig rig2F7B19 with the second 5060 Ti and the 2080 (watts is an estimate until read off the plug). Nov 18: new HiveOS rig rigC80B1A with a 2070 and another 5070 Ti (watts is an estimate until read off the plug). Edit here (or per-browser in the page's Rig setup panel).",
+  "_note": "Defaults for each rig. watts = draw at the wall. Source 'you' = a number Cade gave, 'est' = an estimate to replace. What each rig still owes comes from the cards in payoff.json. Workers matched by hashrate on Nov 8, 2026. Nov 10: the 5060 replaced the 2070 Super in the 5060 Ti rig (watts there is an estimate until read off the plug). Nov 14: the 4080 Super + 5070 Ti rig and the 5070 Ti rig moved to HiveOS, so their pool worker names changed (LLM_Job and rig0EE7F6, matched by hashrate). Nov 15: new HiveOS rig rig2F7B19 with the second 5060 Ti and the 2080 (watts is an estimate until read off the plug). Nov 18: new HiveOS rig rigC80B1A with a 2070 and another 5070 Ti (watts is an estimate until read off the plug). Edit here (or per-browser in the page's Rig setup panel). image = a photo in public/images (Nov 19, 2026); a rig without one gets the drawn frame.",
   "rate": 0.09,
   "rigs": [
     {
@@ -8,6 +8,7 @@
       "gpus": [
         "RTX 4090"
       ],
+      "image": "rtx-4090-rig-product.jpg",
       "worker": "desktop-d40gemj",
       "watts": 650,
       "wattsSource": "you"
@@ -19,6 +20,7 @@
         "RTX 4080 Super",
         "RTX 5070 Ti"
       ],
+      "image": "4080super-5070ti-rig.jpg",
       "worker": "LLM_Job",
       "watts": 850,
       "wattsSource": "you"
@@ -29,6 +31,7 @@
       "gpus": [
         "RTX 5070 Ti"
       ],
+      "image": "5070ti-single-rig.jpg",
       "worker": "rig0EE7F6",
       "watts": 325,
       "wattsSource": "est"
@@ -40,6 +43,7 @@
         "RTX 5060 Ti",
         "RTX 5060"
       ],
+      "image": "5060ti-5060-rig.jpg",
       "worker": "desktop-n8kcvuu",
       "watts": 350,
       "wattsSource": "est"
@@ -51,6 +55,7 @@
         "RTX 5060 Ti",
         "RTX 2080"
       ],
+      "image": "5060ti-2080-rig.jpg",
       "worker": "rig2F7B19",
       "watts": 370,
       "wattsSource": "est"
@@ -62,6 +67,7 @@
         "RTX 5070 Ti",
         "RTX 2070"
       ],
+      "image": "5070ti-2070-rig.jpg",
       "worker": "rigC80B1A",
       "watts": 500,
       "wattsSource": "est"
