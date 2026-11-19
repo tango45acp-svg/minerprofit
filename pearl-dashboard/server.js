@@ -6,9 +6,9 @@ import { readFile } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import { randomUUID, createHash, createHmac, timingSafeEqual } from 'node:crypto';
 
-// HeroMiners reports Pearl hashrate in difficulty-1 shares per second.
-// One difficulty-1 share = 2^32 hashes, so real H/s = pool number × 2^32
-// (this is exactly the pool's own realHashrate / hashrate ratio).
+// Pearl network difficulty is in difficulty-1 shares; one share = 2^32 hashes.
+// HeroMiners used to report hashrate in shares/s too (×2^32 to get H/s). Since
+// Nov 2026 its API reports plain H/s, so the unit is detected on every poll.
 const SHARE_HASHES = 2 ** 32;
 
 // ---------- small, strict helpers: nothing from outside is trusted as-is ----------
@@ -155,21 +155,27 @@ async function pollPool() {
   const units = pos(net?.config?.coinUnits) || 1e8;
   const s = mine.stats || {};
   const coin = (v) => (fin(v) == null ? null : fin(v) / units);
-  // Scale pool numbers to real hashes/s. Prefer the pool's own ratio, fall back to 2^32.
-  const ratio = Number(net?.pool?.realHashrate) / Number(net?.pool?.hashrate);
-  const scale = ratio > 1e8 && ratio < 1e11 ? ratio : SHARE_HASHES;
-  const hs = (v) => (pos(v) || 0) * scale;
   const ms = (v) => (pos(v) ? pos(v) * 1000 : null);
-  // Expected earnings: each pool-unit of hashrate finds reward·86400/difficulty PRL a day.
   const difficulty = pos(net?.network?.difficulty) || null;
   const reward = coin(net?.network?.reward ?? net?.lastblock?.reward);
   const blockTime = pos(net?.network?.difficultyTarget || net?.config?.coinDifficultyTarget) || null;
+  // Scale pool hashrates to real hashes/s:
+  // 1. old API: the pool's own realHashrate / hashrate ratio (about 2^32);
+  // 2. new API: the pool's hashrate set against the network's share rate
+  //    (difficulty / block time). In H/s it's millions of times bigger; in
+  //    shares/s it's a fraction of it, since the pool is part of the network.
+  const ratio = Number(net?.pool?.realHashrate) / Number(net?.pool?.hashrate);
+  const shareRate = difficulty && blockTime ? difficulty / blockTime : null;
+  const poolVsNet = shareRate ? pos(net?.pool?.hashrate) / shareRate : null;
+  const scale = ratio > 1e8 && ratio < 1e11 ? ratio : poolVsNet > 1e4 ? 1 : SHARE_HASHES;
+  const hs = (v) => (pos(v) || 0) * scale;
   const network = {
     difficulty,
     reward,
     blockTime,
-    hashrate: difficulty && blockTime ? (difficulty * SHARE_HASHES) / blockTime : null,
-    prlPerHashDay: difficulty && reward ? (reward * 86400) / (difficulty * scale) : null, // PRL/day per real H/s
+    hashrate: pos(net?.network?.networkHashps) || (shareRate ? shareRate * SHARE_HASHES : null),
+    // Expected earnings: reward·86400 / (difficulty·2^32) PRL a day per real H/s.
+    prlPerHashDay: difficulty && reward ? (reward * 86400) / (difficulty * SHARE_HASHES) : null,
   };
   const payments = [];
   const p = list(mine.payments, 40);
@@ -214,9 +220,10 @@ async function pollPool() {
     sharesInvalid: pos(s.shares_invalid) || 0,
     lastShare: ms(s.lastShare),
     balance: coin(s.balance) ?? 0,
-    paid: coin(s.paid) ?? 0,
-    paid24h: coin(s.payments_24h) ?? 0,
-    paid7d: coin(s.payments_7d) ?? 0,
+    unconfirmed: coin(s.unconfirmedBalance),
+    paid: coin(s.paid),   // the new API has no all-time total
+    paid24h: coin(s.payments_24h ?? s.paid_today) ?? 0,
+    paid7d: coin(s.payments_7d ?? s.paid_7d) ?? 0,
     payments: payments.slice(0, 10),
     hashrateChart: list(mine.charts?.hashrate, 5000)
       .map((pt) => [ms(pt?.[0]), hs(pt?.[1])]).filter((pt) => pt[0]).slice(-600),

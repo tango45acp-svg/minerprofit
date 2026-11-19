@@ -182,3 +182,35 @@ test('password-locked dashboard', async (t) => {
     assert.ok(codes.includes(429), codes.join(','));
   });
 });
+
+// HeroMiners' Nov 2026 API: hashrate in plain H/s, no realHashrate, paid_today/paid_7d.
+// Numbers are from the live pool on Nov 18, 2026.
+test('new HeroMiners format (hashrate already in H/s)', async (t) => {
+  const dir = mkdtempSync(join(tmpdir(), 'pearl-'));
+  const f = join(dir, 'pool.json');
+  const w = (name, h24) => ({ name, hashrate: h24, hashrate_1h: h24, hashrate_6h: h24, hashrate_24h: h24, lastShare: now - 10, shares_good: 800, shares_stale: 1, shares_invalid: 0 });
+  writeFileSync(f, JSON.stringify({
+    mine: {
+      stats: { hashrate: 1546235872063870, hashrate_6h: 1256960543057442, hashrate_24h: 1263285835773769.5, balance: '191777106', unconfirmedBalance: '427003716', paid_today: '0', paid_7d: '0', lastShare: now - 5 },
+      workers: [w('LLM_Job', 416993741617186.4), w('desktop-d40gemj', 316671018574642)],
+    },
+    net: {
+      config: { coinUnits: 1e8, minPaymentThreshold: '100000000', coinDifficultyTarget: 194 },
+      network: { difficulty: 4084570272561, networkHashps: 88323907160375530000, reward: 215894788013 },
+      pool: { hashrate: 4041425221610978000, price: { usd: '1.85' } },
+    },
+  }));
+  const s = await boot({ MOCK_POOL: f });
+  t.after(s.stop);
+  const d = JSON.parse((await s.req('/api/data')).text);
+  const th = (v) => v / 1e12;
+  assert.equal(d.pool.hashScale, 1, 'H/s must not be scaled again');
+  assert.ok(Math.abs(th(d.pool.hashrate24h) - 1263.29) < 0.1, `wallet 24h ${th(d.pool.hashrate24h)} TH/s`);
+  const llm = d.pool.workers.find((x) => x.name === 'LLM_Job');
+  assert.ok(Math.abs(th(llm.hashrate24h) - 416.99) < 0.1);
+  // ~1,263 TH/s of ~88,300,000 TH/s network, 2,158.9 PRL a block every 194 s: about 14 PRL a day
+  const prlDay = d.pool.network.prlPerHashDay * d.pool.hashrate24h;
+  assert.ok(prlDay > 13 && prlDay < 15, `PRL a day ${prlDay}`);
+  assert.ok(Math.abs(d.pool.unconfirmed - 4.27003716) < 1e-9);
+  assert.equal(d.pool.paid, null);
+});

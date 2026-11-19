@@ -878,9 +878,10 @@ footer { font-size: .82rem; color: var(--faint); display: grid; gap: 4px; }
         ${min ? `<div class="payout-bar" role="progressbar" aria-valuenow="${pct.toFixed(0)}" aria-valuemin="0" aria-valuemax="100" aria-label="Balance toward payout"><i style="width:${pct.toFixed(1)}%"></i></div>` : ''}
       </div>
       <div class="rows" style="margin-top:10px">
+        ${p.unconfirmed ? `<div class="row"><span class="l">Waiting to confirm</span><span class="r">${prl(p.unconfirmed, 3)} PRL, ${usd(p.unconfirmed * price)}</span></div>` : ''}
         <div class="row"><span class="l">Paid in the last 24 hours</span><span class="r">${prl(p.paid24h)} PRL, ${usd(p.paid24h * price)}</span></div>
         <div class="row"><span class="l">Paid in the last 7 days</span><span class="r">${prl(p.paid7d)} PRL, ${usd(p.paid7d * price)}</span></div>
-        <div class="row"><span class="l">Paid all time</span><span class="r">${prl(p.paid)} PRL, ${usd(p.paid * price)}</span></div>
+        ${p.paid != null ? `<div class="row"><span class="l">Paid all time</span><span class="r">${prl(p.paid)} PRL, ${usd(p.paid * price)}</span></div>` : ''}
       </div>
       <div class="muted" style="font-size:.85rem;margin-top:12px">Recent payouts</div>
       <div class="rows">${(p.payments || []).slice(0, 5).map((x) => `<div class="row"><span class="l faint">${new Date(x.t).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span><span class="r">${prl(x.amount, 3)} PRL</span></div>`).join('') || '<span class="muted">None yet</span>'}</div>`;
