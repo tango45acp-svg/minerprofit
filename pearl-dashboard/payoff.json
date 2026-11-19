@@ -76,12 +76,11 @@
     },
     {
       "id": "2070s-a",
-      "card": "RTX 2070 Super",
-      "rig": null,
+      "card": "RTX 2070",
+      "rig": "rig-5070ti",
       "cost": null,
-      "status": "idle",
-      "paid": true,
-      "note": "waiting on parts"
+      "status": "mining",
+      "paid": true
     }
   ],
   "cashouts": [
