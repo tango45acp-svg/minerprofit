@@ -51,6 +51,13 @@
       "status": "mining"
     },
     {
+      "id": "5070ti-c",
+      "card": "RTX 5070 Ti",
+      "rig": "rig-5070ti-2070",
+      "cost": null,
+      "status": "mining"
+    },
+    {
       "id": "2080ti",
       "card": "RTX 2080 Ti",
       "rig": null,
@@ -77,7 +84,7 @@
     {
       "id": "2070s-a",
       "card": "RTX 2070",
-      "rig": "rig-5070ti",
+      "rig": "rig-5070ti-2070",
       "cost": null,
       "status": "mining",
       "paid": true
